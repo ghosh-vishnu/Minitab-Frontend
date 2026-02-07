@@ -1,0 +1,513 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    cursor: auto;
+  }
+  
+  button, [role="button"], a {
+    cursor: pointer;
+  }
+  
+  body {
+    @apply bg-gray-50 text-gray-900;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply px-3 py-1.5 rounded font-medium transition-colors duration-150;
+  }
+  
+  .btn-primary {
+    @apply bg-emerald-600 text-white hover:bg-emerald-700;
+  }
+  
+  .btn-secondary {
+    @apply bg-gray-200 text-gray-800 hover:bg-gray-300;
+  }
+  
+  .btn-danger {
+    @apply bg-red-600 text-white hover:bg-red-700;
+  }
+  
+  .input {
+    @apply w-full px-3 py-1.5 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-300 text-xs;
+  }
+  
+  .card {
+    @apply bg-white rounded shadow p-6;
+  }
+
+  .excel-spreadsheet {
+    @apply w-full h-full;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .formula-bar {
+    flex-shrink: 0;
+  }
+
+  .formula-input {
+    @apply font-mono text-xs;
+  }
+
+  /* Ensure ag-grid takes full available height */
+  .ag-theme-alpine {
+    height: 100%;
+    width: 100%;
+  }
+
+  .ag-theme-alpine .ag-root-wrapper {
+    border: 1px solid #e5e7eb;
+  }
+
+  .ag-theme-alpine .ag-body-horizontal-scroll {
+    height: 17px !important;
+  }
+
+  .ag-theme-alpine .ag-body-vertical-scroll {
+    width: 17px !important;
+  }
+
+  /* Excel-style Row Number Column */
+  .excel-row-header {
+    @apply bg-gray-100 border-r border-gray-300;
+    text-align: center;
+    font-weight: 500;
+  }
+  
+  .ag-theme-alpine .ag-header-cell.excel-header {
+    background-color: #f3f4f6;
+    border-right: 1px solid #d1d5db;
+    font-weight: 600;
+    padding: 8px;
+  }
+
+  .ag-theme-alpine .ag-header-cell.excel-row-header {
+    background-color: #f3f4f6;
+    border-right: 1px solid #d1d5db;
+  }
+  
+  .ag-theme-alpine .ag-cell[col-id="_rowNumber"] {
+    background-color: #f3f4f6;
+    border-right: 1px solid #d1d5db;
+    text-align: center;
+    font-weight: 500;
+  }
+
+  .ag-theme-alpine .ag-cell {
+    border: 1px solid #e5e7eb;
+    padding: 4px 8px !important;
+    line-height: 20px;
+  }
+
+  .ag-theme-alpine .ag-cell-value {
+    color: #1f2937;
+    overflow: visible;
+  }
+
+  .ag-theme-alpine .ag-row {
+    border: 1px solid #e5e7eb;
+  }
+
+  .ag-theme-alpine .ag-cell-focus:not(.ag-cell-editing) {
+    border: 2px solid #3b82f6 !important;
+    box-shadow: inset 0 0 2px #3b82f6 !important;
+  }
+
+  .ag-theme-alpine .ag-cell.ag-cell-value {
+    font-family: 'Segoe UI', -apple-system, 'Helvetica Neue', sans-serif;
+    font-size: 13px;
+  }
+
+  .ag-theme-alpine .ag-cell-editing {
+    padding: 0 !important;
+  }
+
+  .ag-theme-alpine .ag-text-field-input {
+    font-family: 'Segoe UI', -apple-system, 'Helvetica Neue', sans-serif;
+    font-size: 13px;
+  }
+
+  /* Selection styling */
+  .ag-theme-alpine .ag-cell.ag-cell-range-selected {
+    background-color: #dbeafe;
+  }
+
+  .ag-theme-alpine .ag-cell.ag-cell-range-selected-1 {
+    background-color: #dbeafe;
+  }
+
+  .toolbar {
+    @apply bg-white border-b border-gray-300;
+    flex-shrink: 0;
+    min-height: 40px;
+  }
+
+  /* Minitab Styles - Professional Statistical Software */
+  .minitab-layout {
+    @apply bg-gray-50;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  }
+
+  /* Minitab Column Headers (C1, C2, C3...) */
+  .ag-theme-alpine .ag-header-cell.minitab-column-header {
+    background-color: #eef1f3;
+    border-right: 1px solid #e9ecef;
+    border-bottom: 1px solid #e0e5e9;
+    font-weight: 500;
+    font-size: 12px;
+    color: #5f6b75;
+    padding: 6px 8px;
+    text-align: center;
+    letter-spacing: 0;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .ag-theme-alpine .ag-header-cell.minitab-row-header {
+    background-color: #f5f7f9;
+    border-right: 1px solid #e9ecef;
+    border-bottom: 1px solid #e0e5e9;
+  }
+
+  /* Minitab Worksheet Grid */
+  .ag-theme-alpine .ag-root-wrapper {
+    border: 1px solid #e9ecef;
+    border-radius: 0;
+  }
+
+  .ag-theme-alpine .ag-header {
+    background-color: #eef1f3;
+    border-bottom: 1px solid #e0e5e9;
+  }
+
+  /* Minitab Cell Styling */
+  .ag-theme-alpine .ag-cell {
+    border-right: 1px solid #e9ecef;
+    border-bottom: 1px solid #e9ecef;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 13px;
+    color: #2d3748;
+    padding: 0 8px !important;
+    line-height: 26px;
+  }
+
+  .ag-theme-alpine .ag-row {
+    border: none;
+    height: 26px;
+  }
+
+  .ag-theme-alpine .ag-row:hover {
+    background-color: #fafbfc;
+  }
+
+  .ag-theme-alpine .ag-row-selected {
+    background-color: #f0f6ff;
+  }
+
+  /* Minitab Cell Focus - Soft Green Border */
+  .ag-theme-alpine .ag-cell-focus:not(.ag-cell-editing) {
+    border: 2px solid #48a868 !important;
+    box-shadow: none !important;
+    outline: none !important;
+  }
+
+  /* Minitab Cell Selection Range - Soft Blue */
+  .ag-theme-alpine .ag-cell.ag-cell-range-selected {
+    background-color: #f0f6ff;
+  }
+
+  .ag-theme-alpine .ag-cell.ag-cell-range-selected-1 {
+    background-color: #f0f6ff;
+  }
+
+  /* Minitab Cell Editing */
+  .ag-theme-alpine .ag-cell-editing {
+    padding: 0 !important;
+    background-color: #ffffff;
+  }
+
+  .ag-theme-alpine .ag-text-field-input {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 13px;
+    padding: 0 8px !important;
+    line-height: 26px;
+    height: 26px !important;
+    border: 1px solid #48a868 !important;
+    border-radius: 0 !important;
+  }
+
+  /* Hide row count column background in edit mode */
+  .ag-theme-alpine .ag-cell[col-id="_rowNumber"] {
+    background-color: #f5f7f9;
+    font-weight: 500;
+    color: #6b7280;
+  }
+
+  /* Scrollbars - Subtle */
+  .ag-theme-alpine .ag-body-horizontal-scroll {
+    height: 12px !important;
+  }
+
+  .ag-theme-alpine .ag-body-vertical-scroll {
+    width: 12px !important;
+  }
+
+  /* Selection Checkbox */
+  .ag-theme-alpine .ag-checkbox-input-wrapper {
+    outline: 1px solid #48a868;
+  }
+
+  .ag-theme-alpine .ag-checkbox-input:checked::after {
+    background-color: #48a868;
+  }
+
+  /* Professional UI Polish */
+  button:focus {
+    outline: none;
+  }
+
+  input:focus {
+    outline: none;
+  }
+
+  /* Subtle transition for all interactive elements */
+  button, a, input, select, textarea {
+    transition: all 100ms ease;
+  }
+
+  /* Remove default outline on focus for cleaner look */
+  *:focus {
+    outline: none;
+  }
+
+  /* Soft green accent (Minitab brand) */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 5px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+  }
+
+  /* Ensure consistent font across all elements */
+  body, button, input, select, textarea {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  }
+
+  /* Remove system select highlight */
+  *::selection {
+    background-color: #f0f6ff;
+    color: #1e40af;
+  }
+}
+
+/* Minitab-style Cascading Menu System */
+.minitab-top-menu {
+  position: relative;
+  display: inline-block;
+  overflow: visible;
+  pointer-events: auto;
+  z-index: 1050;
+}
+
+.minitab-top-menu-button {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.375rem 0.75rem;
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  cursor: pointer;
+  transition: background-color 150ms ease-out;
+  user-select: none;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.minitab-top-menu-button:hover {
+  background-color: #f3f4f6;
+}
+
+.minitab-top-menu-button:active {
+  background-color: #e5e7eb;
+}
+
+/* Root submenu dropdown */
+.minitab-root-submenu {
+  position: fixed;
+  z-index: 10000;
+  min-width: 220px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 0;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  padding: 4px 0;
+  pointer-events: auto;
+  overflow: visible;
+}
+
+/* Menu item container */
+.minitab-menu-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0;
+  margin: 0;
+  color: #374151;
+  background: white;
+  border: none;
+  cursor: pointer;
+  outline: none;
+  transition: background-color 100ms ease-out;
+  user-select: none;
+  font-size: 13px;
+  line-height: 1.5;
+  pointer-events: auto;
+  overflow: visible;
+}
+
+.minitab-menu-item:hover {
+  background-color: #f9fafb;
+}
+
+.minitab-menu-item:focus {
+  background-color: #f0f4ff;
+  outline: none;
+}
+
+.minitab-menu-item[data-has-submenu="true"]:hover {
+  background-color: #f9fafb;
+}
+
+/* Menu item content area */
+.minitab-menu-item-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 6px 12px;
+  gap: 24px;
+}
+
+/* Arrow indicator for items with submenus */
+.minitab-menu-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  font-size: 10px;
+  color: #9ca3af;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+/* Submenu dropdown */
+.minitab-submenu {
+  position: absolute;
+  top: 0;
+  left: 100%;
+  z-index: 10001;
+  min-width: 220px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 0;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  margin-left: 0;
+  padding: 4px 0;
+  pointer-events: auto;
+  overflow: visible;
+  padding: 4px 0;
+  margin-top: -4px;
+}
+
+/* Ensure submenus are visible and not cut off */
+.minitab-menu-item {
+  overflow: visible;
+}
+
+/* Additional hover state for better UX */
+.minitab-menu-item:hover .minitab-menu-arrow {
+  color: #6b7280;
+}
+
+/* Keyboard focus styles */
+.minitab-menu-item:focus-visible {
+  background-color: #f0f4ff;
+  box-shadow: inset 0 0 0 1px #d1d5db;
+}
+
+/* Ensure menu items inside submenus have proper spacing */
+.minitab-submenu .minitab-menu-item {
+  margin: 0;
+  padding: 0;
+}
+
+/* Remove default button styles from all menu items */
+.minitab-menu-item,
+.minitab-top-menu-button {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  border: none;
+}
+
+/* Smooth animations for submenu appearance */
+.minitab-submenu {
+  animation: slideIn 100ms ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Separator lines between menu sections (if needed) */
+.minitab-menu-separator {
+  height: 1px;
+  background-color: #e5e7eb;
+  margin: 4px 0;
+}
+
+/* Typography for menu items */
+.minitab-menu-item span {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.4;
+  color: inherit;
+}
+
+

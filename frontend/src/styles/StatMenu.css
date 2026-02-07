@@ -1,0 +1,112 @@
+.minitab-top-menu {
+  position: relative;
+  display: inline-block;
+  z-index: 1050;
+  overflow: visible;
+  pointer-events: auto;
+}
+
+.minitab-top-menu-button {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  cursor: pointer;
+  transition: background-color 150ms ease-out;
+  user-select: none;
+  text-decoration: none;
+  white-space: nowrap;
+  pointer-events: auto;
+}
+
+.minitab-top-menu-button:hover {
+  background-color: #f3f4f6;
+}
+
+.minitab-top-menu-button[aria-expanded="true"] {
+  background-color: #f3f4f6;
+}
+
+.minitab-root-submenu {
+  position: fixed !important;
+  z-index: 10000 !important;
+  min-width: 220px;
+  background: white !important;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  padding: 4px 0 !important;
+  margin: 0 !important;
+  pointer-events: auto !important;
+  overflow: visible !important;
+  list-style: none;
+  visibility: visible;
+  opacity: 1;
+  display: block;
+}
+
+.minitab-menu-item {
+  position: relative;
+  display: block !important;
+  min-height: 32px;
+  padding: 0 !important;
+  margin: 0 !important;
+  color: #374151;
+  background: white;
+  border: none;
+  cursor: pointer;
+  outline: none;
+  font-size: 13px;
+  line-height: 1.5;
+  pointer-events: auto;
+  overflow: visible;
+}
+
+.minitab-menu-item:hover {
+  background-color: #f3f4f6;
+}
+
+.minitab-menu-item:focus {
+  background-color: #e5e7eb;
+  outline: none;
+}
+
+.minitab-menu-item-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 6px 12px;
+  gap: 24px;
+  cursor: pointer;
+}
+
+.minitab-menu-arrow {
+  font-size: 10px;
+  color: #9ca3af;
+  flex-shrink: 0;
+}
+
+.minitab-submenu {
+  position: absolute;
+  top: 0 !important;
+  left: 100% !important;
+  z-index: 10001 !important;
+  min-width: 220px;
+  background: white !important;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  margin: 0 !important;
+  margin-left: 2px;
+  padding: 4px 0 !important;
+  pointer-events: auto !important;
+  overflow: visible !important;
+  list-style: none;
+  visibility: visible;
+  opacity: 1;
+  display: block !important;
+}
