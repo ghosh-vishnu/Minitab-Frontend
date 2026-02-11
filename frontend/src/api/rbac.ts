@@ -14,6 +14,7 @@ export interface Role {
   name: string
   description?: string
   is_active: boolean
+  scope?: 'global' | 'company'
   created_at: string
   updated_at: string
   created_by?: string

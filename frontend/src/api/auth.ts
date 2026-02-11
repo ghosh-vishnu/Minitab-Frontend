@@ -1,5 +1,30 @@
 import api from './axios'
 
+export type UserType = 'SUPER' | 'CHILD' | 'COMPANY_ADMIN' | 'COMPANY_USER'
+
+export interface Company {
+  id: string
+  name: string
+  company_code: string
+  email: string
+  status: 'active' | 'inactive' | 'suspended' | 'pending'
+  is_active: boolean
+}
+
+export interface Role {
+  id: string
+  name: string
+  description?: string
+  scope: 'global' | 'company'
+}
+
+export interface Permission {
+  id: string
+  name: string
+  codename: string
+  category: string
+}
+
 export interface LoginCredentials {
   username?: string
   email?: string
@@ -22,10 +47,14 @@ export interface AuthResponse {
     email: string
     first_name?: string
     last_name?: string
+    full_name?: string
     is_super_admin?: boolean
     is_superuser?: boolean
-    roles?: Array<{ id: string; name: string; description?: string }>
-    permissions?: Array<{ id: string; name: string; codename: string }>
+    is_staff?: boolean
+    user_type?: UserType
+    company?: Company | null
+    roles?: Role[]
+    permissions?: Permission[]
   }
   access: string
   refresh: string

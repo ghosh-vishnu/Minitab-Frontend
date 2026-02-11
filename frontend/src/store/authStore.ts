@@ -1,15 +1,45 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 
+export type UserType = 'SUPER' | 'CHILD' | 'COMPANY_ADMIN' | 'COMPANY_USER'
+
+export interface Company {
+  id: string
+  name: string
+  company_code: string
+  email: string
+  status: 'active' | 'inactive' | 'suspended' | 'pending'
+  is_active: boolean
+}
+
+export interface Role {
+  id: string
+  name: string
+  description?: string
+  scope: 'global' | 'company'
+}
+
+export interface Permission {
+  id: string
+  name: string
+  codename: string
+  category: string
+}
+
 interface User {
   id: string
   username: string
   email: string
   first_name?: string
   last_name?: string
+  full_name?: string
   is_super_admin?: boolean
   is_superuser?: boolean
-  roles?: Array<{ id: string; name: string }>
+  is_staff?: boolean
+  user_type?: UserType
+  company?: Company | null
+  roles?: Role[]
+  permissions?: Permission[]
 }
 
 interface AuthState {
@@ -20,22 +50,33 @@ interface AuthState {
   setAuth: (user: User, accessToken: string, refreshToken: string) => void
   logout: () => void
   updateUser: (user: User) => void
+  // Helper methods
+  isSuperAdmin: () => boolean
+  isCompanyAdmin: () => boolean
+  isCompanyUser: () => boolean
+  hasPermission: (codename: string) => boolean
+  hasRole: (roleName: string) => boolean
 }
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
       accessToken: null,
       refreshToken: null,
       isAuthenticated: false,
-      setAuth: (user, accessToken, refreshToken) =>
+      setAuth: (user, accessToken, refreshToken) => {
+        // Normalize user type for backward compatibility
+        if (user && user.user_type === 'CHILD' as any) {
+          user.user_type = 'COMPANY_ADMIN'
+        }
         set({
           user,
           accessToken,
           refreshToken,
           isAuthenticated: true,
-        }),
+        })
+      },
       logout: () =>
         set({
           user: null,
@@ -44,10 +85,52 @@ export const useAuthStore = create<AuthState>()(
           isAuthenticated: false,
         }),
       updateUser: (user) => set({ user }),
+      
+      // Helper methods
+      isSuperAdmin: () => {
+        const { user } = get()
+        return user?.is_superuser === true || user?.is_staff === true || user?.user_type === 'SUPER'
+      },
+      
+      isCompanyAdmin: () => {
+        const { user } = get()
+        if (!user || !user.company) return false
+        // Check if user is primary admin of their company or has admin role
+        return user.user_type === 'COMPANY_ADMIN' || user.user_type === 'CHILD' || user.roles?.some(role => 
+          role.name.toLowerCase().includes('admin') && role.scope === 'company'
+        ) || false
+      },
+      
+      isCompanyUser: () => {
+        const { user } = get()
+        if (!user || !user.company) return false
+        return user.user_type === 'COMPANY_USER'
+      },
+      
+      hasPermission: (codename: string) => {
+        const { user } = get()
+        if (!user) return false
+        // Super admin has all permissions
+        if (get().isSuperAdmin()) return true
+        return user.permissions?.some(p => p.codename === codename) || false
+      },
+      
+      hasRole: (roleName: string) => {
+        const { user } = get()
+        if (!user) return false
+        return user.roles?.some(r => r.name.toLowerCase() === roleName.toLowerCase()) || false
+      },
     }),
     {
       name: 'auth-storage',
       storage: createJSONStorage(() => localStorage),
+      migrate: (persistedState: any, version: number) => {
+        // Handle migration of old user types
+        if (persistedState?.user?.user_type === 'CHILD') {
+          persistedState.user.user_type = 'COMPANY_ADMIN'
+        }
+        return persistedState
+      },
     }
   )
 )
