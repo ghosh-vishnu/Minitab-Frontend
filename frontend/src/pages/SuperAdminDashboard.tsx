@@ -3,10 +3,13 @@ import { companiesAPI, Company, CreateCompanyData } from '../api/companies'
 import { plansAPI } from '../api/subscriptions'
 import type { SubscriptionPlan } from '../types/subscription'
 import { useAuthStore } from '../store/authStore'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { authAPI } from '../api/auth'
+import toast from 'react-hot-toast'
 
 export default function SuperAdminDashboard() {
-  const { user } = useAuthStore()
+  const { user, logout: logoutStore, refreshToken } = useAuthStore()
+  const navigate = useNavigate()
   const [companies, setCompanies] = useState<Company[]>([])
   const [plans, setPlans] = useState<SubscriptionPlan[]>([])
   const [loading, setLoading] = useState(true)
@@ -121,6 +124,21 @@ export default function SuperAdminDashboard() {
     return colors[status as keyof typeof colors] || colors.inactive
   }
 
+  const handleLogout = async () => {
+    try {
+      if (refreshToken) {
+        await authAPI.logout(refreshToken)
+      }
+      logoutStore()
+      navigate('/login')
+      toast.success('Logged out successfully')
+    } catch (error) {
+      console.error('Logout error:', error)
+      logoutStore()
+      navigate('/login')
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -139,15 +157,26 @@ export default function SuperAdminDashboard() {
               <h1 className="text-3xl font-bold text-gray-900">Super Admin Dashboard</h1>
               <p className="mt-1 text-sm text-gray-600">Welcome back, {user?.full_name || user?.username}</p>
             </div>
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition-colors flex items-center gap-2"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              Create Company
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleLogout}
+                className="text-gray-700 hover:text-gray-900 hover:bg-gray-100 font-medium py-2 px-4 rounded-lg transition-colors flex items-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                Logout
+              </button>
+              <button
+                onClick={() => setShowCreateModal(true)}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition-colors flex items-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Create Company
+              </button>
+            </div>
           </div>
         </div>
       </div>

@@ -1,11 +1,15 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { usersAPI, User, CreateUserData } from '../api/users'
 import { companiesAPI, CompanyStats } from '../api/companies'
 import { rbacAPI, Role } from '../api/rbac'
 import { useAuthStore } from '../store/authStore'
+import { authAPI } from '../api/auth'
+import toast from 'react-hot-toast'
 
 export default function CompanyAdminDashboard() {
-  const { user } = useAuthStore()
+  const { user, logout: logoutStore, refreshToken } = useAuthStore()
+  const navigate = useNavigate()
   const [users, setUsers] = useState<User[]>([])
   const [roles, setRoles] = useState<Role[]>([])
   const [stats, setStats] = useState<CompanyStats | null>(null)
@@ -25,7 +29,7 @@ export default function CompanyAdminDashboard() {
       setError(null)
 
       const [usersRes, rolesRes, statsRes] = await Promise.all([
-        usersAPI.listCompanyUsers({ ordering: '-created_at' }),
+        usersAPI.listCompanyUsers({ ordering: '-date_joined' }),
         rbacAPI.getRoles().then(roles => ({ results: roles.filter(r => r.scope === 'company') })),
         user?.company ? companiesAPI.getCompanyStats(user.company.id) : Promise.resolve(null),
       ])
@@ -57,10 +61,13 @@ export default function CompanyAdminDashboard() {
     if (!confirm('Are you sure you want to deactivate this user?')) return
 
     try {
+      setError(null)
       await usersAPI.deactivateUser(userId)
+      toast.success('User deactivated successfully')
       loadData()
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Failed to deactivate user')
+      toast.error(err.response?.data?.detail || 'Failed to deactivate user')
     }
   }
 
@@ -82,6 +89,21 @@ export default function CompanyAdminDashboard() {
   const userLimitPercentage = stats ? (stats.total_users / stats.user_limit) * 100 : 0
   const isUserLimitReached = stats ? stats.total_users >= stats.user_limit : false
 
+  const handleLogout = async () => {
+    try {
+      if (refreshToken) {
+        await authAPI.logout(refreshToken)
+      }
+      logoutStore()
+      navigate('/login')
+      toast.success('Logged out successfully')
+    } catch (error) {
+      console.error('Logout error:', error)
+      logoutStore()
+      navigate('/login')
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -102,17 +124,28 @@ export default function CompanyAdminDashboard() {
                 {user?.company?.name} - Manage your team
               </p>
             </div>
-            <button
-              onClick={() => setShowCreateModal(true)}
-              disabled={isUserLimitReached}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-              title={isUserLimitReached ? 'User limit reached' : 'Create new user'}
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              Create User
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleLogout}
+                className="text-gray-700 hover:text-gray-900 hover:bg-gray-100 font-medium py-2 px-4 rounded-lg transition-colors flex items-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                Logout
+              </button>
+              <button
+                onClick={() => setShowCreateModal(true)}
+                disabled={isUserLimitReached}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                title={isUserLimitReached ? 'User limit reached' : 'Create new user'}
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Create User
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -160,7 +193,7 @@ export default function CompanyAdminDashboard() {
 
         {/* Stats Cards */}
         {stats && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             <div className="bg-white rounded-lg shadow p-6">
               <div className="flex items-center">
                 <div className="p-3 bg-purple-100 rounded-lg">
@@ -185,38 +218,6 @@ export default function CompanyAdminDashboard() {
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-600">Active Users</p>
                   <p className="text-2xl font-bold text-gray-900">{stats.active_users}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="flex items-center">
-                <div className="p-3 bg-blue-100 rounded-lg">
-                  <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
-                  </svg>
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Spreadsheets</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {stats.total_spreadsheets}/{stats.spreadsheet_limit}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="flex items-center">
-                <div className="p-3 bg-yellow-100 rounded-lg">
-                  <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
-                  </svg>
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Storage Used</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {(stats.storage_used_mb / 1024).toFixed(1)} GB
-                  </p>
                 </div>
               </div>
             </div>

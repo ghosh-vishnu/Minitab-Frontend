@@ -11,6 +11,8 @@ export default function CompanyDetails() {
   const [error, setError] = useState<string | null>(null)
   const [isEditing, setIsEditing] = useState(false)
   const [formData, setFormData] = useState<UpdateCompanyData>({})
+  const [featuresMaxUsers, setFeaturesMaxUsers] = useState<number>(1)
+  const [savingFeatures, setSavingFeatures] = useState(false)
 
   useEffect(() => {
     if (id) {
@@ -33,6 +35,10 @@ export default function CompanyDetails() {
         address: data.address_line1 || data.address || '',
         website: data.website || '',
       })
+      if (data.subscription) {
+        const limit = data.subscription.user_limit ?? data.subscription.max_users ?? 1
+        setFeaturesMaxUsers(typeof limit === 'number' ? limit : 1)
+      }
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Failed to load company details')
       toast.error('Failed to load company details')
@@ -81,6 +87,29 @@ export default function CompanyDetails() {
       loadCompany()
     } catch (err: any) {
       toast.error('Failed to activate company')
+    }
+  }
+
+  const handleUpdateFeatures = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!id || !company?.subscription) return
+
+    const currentUsers = company.subscription.current_users ?? 0
+    if (featuresMaxUsers < currentUsers) {
+      toast.error(`Licensed users cannot be less than current users (${currentUsers})`)
+      return
+    }
+
+    try {
+      setSavingFeatures(true)
+      await companiesAPI.updateSubscriptionFeatures(id, { max_users: featuresMaxUsers })
+      toast.success('Features updated successfully')
+      loadCompany()
+    } catch (err: any) {
+      const msg = err.response?.data?.detail || 'Failed to update features'
+      toast.error(msg)
+    } finally {
+      setSavingFeatures(false)
     }
   }
 
@@ -318,7 +347,16 @@ export default function CompanyDetails() {
 
                     <div>
                       <label className="block text-sm font-medium text-gray-500">Tier</label>
-                      <p className="mt-1 text-sm text-gray-900">{company.subscription.plan.tier}</p>
+                      <p className="mt-1 text-sm text-gray-900">{company.subscription.plan.tier ?? '—'}</p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-500">Licensed Users</label>
+                      <p className="mt-1 text-sm text-gray-900">
+                        {company.subscription.current_users ?? 0} / {company.subscription.user_limit ?? company.subscription.max_users ?? '—'}
+                      </p>
                     </div>
                   </div>
 
@@ -334,6 +372,44 @@ export default function CompanyDetails() {
                     </div>
                   </div>
                 </div>
+              </div>
+            )}
+
+            {/* Update Features */}
+            {company.subscription && (
+              <div className="bg-white rounded-lg shadow p-6">
+                <h2 className="text-xl font-bold text-gray-900 mb-2">Update Features</h2>
+                <p className="text-sm text-gray-600 mb-4">
+                  Change licensed user count when you add more seats. New limit cannot be less than current users.
+                </p>
+                <form onSubmit={handleUpdateFeatures} className="space-y-4">
+                  <div>
+                    <label htmlFor="featuresMaxUsers" className="block text-sm font-medium text-gray-700 mb-1">
+                      Licensed Users *
+                    </label>
+                    <input
+                      id="featuresMaxUsers"
+                      type="number"
+                      min={Math.max(1, company.subscription.current_users ?? 0)}
+                      max={10000}
+                      value={featuresMaxUsers}
+                      onChange={(e) => setFeaturesMaxUsers(Math.max(1, parseInt(e.target.value, 10) || 1))}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                    <p className="mt-1 text-xs text-gray-500">
+                      Number of users this company can create. Current: {company.subscription.current_users ?? 0} users.
+                    </p>
+                  </div>
+                  <div className="flex items-center justify-end gap-3 pt-2">
+                    <button
+                      type="submit"
+                      disabled={savingFeatures || featuresMaxUsers === (company.subscription.user_limit ?? company.subscription.max_users)}
+                      className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {savingFeatures ? 'Saving...' : 'Save Features'}
+                    </button>
+                  </div>
+                </form>
               </div>
             )}
           </div>

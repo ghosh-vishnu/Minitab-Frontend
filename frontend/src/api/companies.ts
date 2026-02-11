@@ -27,12 +27,17 @@ export interface Company {
     plan: {
       id: string
       name: string
-      tier: string
+      tier?: string
     }
     status: string
     start_date: string
     end_date: string
     is_active: boolean
+    user_limit?: number
+    current_users?: number
+    max_users?: number | null
+    max_spreadsheets?: number | null
+    max_storage_mb?: number | null
   }
   settings?: Record<string, any>
   created_at: string
@@ -70,15 +75,20 @@ export interface AssignSubscriptionData {
   end_date?: string
 }
 
+export interface UpdateSubscriptionFeaturesData {
+  max_users: number
+  max_spreadsheets?: number | null
+  max_storage_mb?: number | null
+}
+
 export interface CompanyStats {
   total_users: number
   active_users: number
-  total_spreadsheets: number
-  storage_used_mb: number
-  subscription_status: string
+  subscription_status?: string
   user_limit: number
-  spreadsheet_limit: number
-  storage_limit_mb: number
+  remaining_slots?: number
+  inactive_users?: number
+  subscription_days_remaining?: number
 }
 
 export const companiesAPI = {
@@ -125,6 +135,18 @@ export const companiesAPI = {
   // Assign subscription to company
   assignSubscription: async (companyId: string, data: AssignSubscriptionData) => {
     const response = await api.post(`/companies/${companyId}/assign-subscription/`, data)
+    return response.data
+  },
+
+  // Update subscription features (e.g. licensed user count)
+  updateSubscriptionFeatures: async (
+    companyId: string,
+    data: UpdateSubscriptionFeaturesData
+  ): Promise<Company> => {
+    const response = await api.post<Company>(
+      `/companies/${companyId}/update-subscription-features/`,
+      data
+    )
     return response.data
   },
 
