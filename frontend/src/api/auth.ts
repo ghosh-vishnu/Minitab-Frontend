@@ -29,6 +29,8 @@ export interface LoginCredentials {
   username?: string
   email?: string
   password: string
+  /** Required for company login (Company Admin / Company User). Ignored for Super Admin. */
+  company_code?: string
 }
 
 export interface RegisterData {

@@ -282,7 +282,7 @@ export default function SuperAdminDashboard() {
                   Company
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Code
+                  Licence Key
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
@@ -412,7 +412,9 @@ function CreateCompanyModal({
     admin_password: '',
     admin_first_name: '',
     admin_last_name: '',
+    subscription_duration_months: 12,
   })
+  const [durationOption, setDurationOption] = useState<'6' | '12' | '24' | '36' | 'custom'>('12')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -421,7 +423,24 @@ function CreateCompanyModal({
     try {
       setLoading(true)
       setError(null)
-      await onSubmit(formData)
+      // Basic validation: if custom duration selected, require a custom end date
+      if (durationOption === 'custom' && !formData.subscription_end_date) {
+        setError('Please select a custom end date for the subscription.')
+        setLoading(false)
+        return
+      }
+
+      const payload: CreateCompanyData = { ...formData }
+
+      // Ensure we only send the relevant subscription field
+      if (durationOption === 'custom') {
+        delete (payload as any).subscription_duration_months
+      } else {
+        payload.subscription_duration_months = parseInt(durationOption, 10)
+        delete (payload as any).subscription_end_date
+      }
+
+      await onSubmit(payload)
     } catch (err: any) {
       setError(err.message)
     } finally {
@@ -512,6 +531,52 @@ function CreateCompanyModal({
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
               />
               <p className="mt-1 text-xs text-gray-500">Number of users this company can create</p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Subscription Duration</label>
+              <select
+                value={durationOption}
+                onChange={(e) => {
+                  const value = e.target.value as '6' | '12' | '24' | '36' | 'custom'
+                  setDurationOption(value)
+                  if (value === 'custom') {
+                    setFormData({ ...formData, subscription_duration_months: undefined })
+                  } else {
+                    setFormData({
+                      ...formData,
+                      subscription_duration_months: parseInt(value, 10),
+                      subscription_end_date: undefined,
+                    })
+                  }
+                }}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="6">6 months</option>
+                <option value="12">1 year</option>
+                <option value="24">2 years</option>
+                <option value="36">3 years</option>
+                <option value="custom">Custom end date</option>
+              </select>
+              <p className="mt-1 text-xs text-gray-500">
+                Choose a standard duration or select a custom end date for trials.
+              </p>
+
+              {durationOption === 'custom' && (
+                <div className="mt-3">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Custom End Date</label>
+                  <input
+                    type="date"
+                    value={formData.subscription_end_date || ''}
+                    onChange={(e) => setFormData({ ...formData, subscription_end_date: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    min={new Date().toISOString().split('T')[0]}
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    For example, select a date 15 days from today to give a 15-day trial.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 

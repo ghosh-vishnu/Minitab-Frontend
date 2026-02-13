@@ -56,6 +56,9 @@ export interface CreateCompanyData {
   admin_password: string
   admin_first_name?: string
   admin_last_name?: string
+  // Subscription configuration: either duration (in months) or custom end date (YYYY-MM-DD)
+  subscription_duration_months?: number
+  subscription_end_date?: string
 }
 
 export interface UpdateCompanyData {
@@ -89,6 +92,7 @@ export interface CompanyStats {
   remaining_slots?: number
   inactive_users?: number
   subscription_days_remaining?: number
+  subscription_end_date?: string | null
 }
 
 export const companiesAPI = {

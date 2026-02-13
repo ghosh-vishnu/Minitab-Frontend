@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { companiesAPI, Company, UpdateCompanyData } from '../api/companies'
+import { subscriptionsAPI, plansAPI } from '../api/subscriptions'
+import type { SubscriptionPlan } from '../types/subscription'
 import toast from 'react-hot-toast'
 
 export default function CompanyDetails() {
@@ -13,6 +15,16 @@ export default function CompanyDetails() {
   const [formData, setFormData] = useState<UpdateCompanyData>({})
   const [featuresMaxUsers, setFeaturesMaxUsers] = useState<number>(1)
   const [savingFeatures, setSavingFeatures] = useState(false)
+  const [isEditingSubscription, setIsEditingSubscription] = useState(false)
+  const [subscriptionFormData, setSubscriptionFormData] = useState<{
+    plan: string
+    status: string
+    start_date: string
+    end_date: string
+  }>({ plan: '', status: 'active', start_date: '', end_date: '' })
+  const [plans, setPlans] = useState<SubscriptionPlan[]>([])
+  const [loadingPlans, setLoadingPlans] = useState(false)
+  const [savingSubscription, setSavingSubscription] = useState(false)
 
   useEffect(() => {
     if (id) {
@@ -113,6 +125,69 @@ export default function CompanyDetails() {
     }
   }
 
+  const loadPlans = async () => {
+    try {
+      setLoadingPlans(true)
+      const res = await plansAPI.listPlans({ page_size: 100 })
+      setPlans(res.results || [])
+    } catch {
+      toast.error('Failed to load plans')
+    } finally {
+      setLoadingPlans(false)
+    }
+  }
+
+  const openSubscriptionEdit = () => {
+    if (!company?.subscription) return
+    const sub = company.subscription
+    const planId = typeof sub.plan === 'object' && sub.plan !== null && 'id' in sub.plan
+      ? (sub.plan as { id: string }).id
+      : (sub.plan as string)
+    setSubscriptionFormData({
+      plan: planId,
+      status: sub.status || 'active',
+      start_date: sub.start_date ? sub.start_date.slice(0, 10) : '',
+      end_date: sub.end_date ? sub.end_date.slice(0, 10) : '',
+    })
+    if (plans.length === 0) loadPlans()
+    setIsEditingSubscription(true)
+  }
+
+  const handleSaveSubscription = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!company?.subscription?.id) return
+    const { plan, status, start_date, end_date } = subscriptionFormData
+    if (!start_date || !end_date) {
+      toast.error('Start date and end date are required')
+      return
+    }
+    if (new Date(end_date) <= new Date(start_date)) {
+      toast.error('End date must be after start date')
+      return
+    }
+
+    try {
+      setSavingSubscription(true)
+      await subscriptionsAPI.patchSubscription(company.subscription.id, {
+        plan,
+        status: status as 'active' | 'expired' | 'cancelled' | 'suspended' | 'trial',
+        start_date: start_date + 'T00:00:00Z',
+        end_date: end_date + 'T23:59:59Z',
+      })
+      toast.success('Subscription updated successfully')
+      setIsEditingSubscription(false)
+      loadCompany()
+    } catch (err: any) {
+      const msg =
+        err.response?.data?.end_date?.[0] ||
+        err.response?.data?.detail ||
+        'Failed to update subscription'
+      toast.error(typeof msg === 'string' ? msg : 'Failed to update subscription')
+    } finally {
+      setSavingSubscription(false)
+    }
+  }
+
   if (loading && !company) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -167,7 +242,7 @@ export default function CompanyDetails() {
               </Link>
               <div>
                 <h1 className="text-3xl font-bold text-gray-900">{company.name}</h1>
-                <p className="mt-1 text-sm text-gray-600">Company Code: {company.company_code}</p>
+                <p className="mt-1 text-sm text-gray-600">Licence Key: {company.company_code}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -326,52 +401,153 @@ export default function CompanyDetails() {
             {/* Subscription Info */}
             {company.subscription && (
               <div className="bg-white rounded-lg shadow p-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">Subscription</h2>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-500">Plan</label>
-                    <p className="mt-1 text-sm text-gray-900 font-medium">{company.subscription.plan.name}</p>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-500">Status</label>
-                      <p className="mt-1">
-                        <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          company.subscription.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                        }`}>
-                          {company.subscription.status}
-                        </span>
-                      </p>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-500">Tier</label>
-                      <p className="mt-1 text-sm text-gray-900">{company.subscription.plan.tier ?? '—'}</p>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-500">Licensed Users</label>
-                      <p className="mt-1 text-sm text-gray-900">
-                        {company.subscription.current_users ?? 0} / {company.subscription.user_limit ?? company.subscription.max_users ?? '—'}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-500">Start Date</label>
-                      <p className="mt-1 text-sm text-gray-900">{new Date(company.subscription.start_date).toLocaleDateString()}</p>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-500">End Date</label>
-                      <p className="mt-1 text-sm text-gray-900">{new Date(company.subscription.end_date).toLocaleDateString()}</p>
-                    </div>
-                  </div>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-bold text-gray-900">Subscription</h2>
+                  {!isEditingSubscription && (
+                    <button
+                      type="button"
+                      onClick={openSubscriptionEdit}
+                      className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                    >
+                      Edit
+                    </button>
+                  )}
                 </div>
+
+                {isEditingSubscription ? (
+                  <form onSubmit={handleSaveSubscription} className="space-y-4">
+                    <div>
+                      <label htmlFor="sub-plan" className="block text-sm font-medium text-gray-700 mb-1">Plan</label>
+                      <select
+                        id="sub-plan"
+                        value={subscriptionFormData.plan}
+                        onChange={(e) => setSubscriptionFormData((s) => ({ ...s, plan: e.target.value }))}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        required
+                      >
+                        {loadingPlans ? (
+                          <option>Loading plans...</option>
+                        ) : (
+                          plans.map((p) => (
+                            <option key={p.id} value={p.id}>
+                              {p.name}
+                            </option>
+                          ))
+                        )}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label htmlFor="sub-status" className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                      <select
+                        id="sub-status"
+                        value={subscriptionFormData.status}
+                        onChange={(e) => setSubscriptionFormData((s) => ({ ...s, status: e.target.value }))}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      >
+                        <option value="active">Active</option>
+                        <option value="trial">Trial</option>
+                        <option value="suspended">Suspended</option>
+                        <option value="expired">Expired</option>
+                        <option value="cancelled">Cancelled</option>
+                      </select>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label htmlFor="sub-start" className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                        <input
+                          id="sub-start"
+                          type="date"
+                          value={subscriptionFormData.start_date}
+                          onChange={(e) => setSubscriptionFormData((s) => ({ ...s, start_date: e.target.value }))}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="sub-end" className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+                        <input
+                          id="sub-end"
+                          type="date"
+                          value={subscriptionFormData.end_date}
+                          onChange={(e) => setSubscriptionFormData((s) => ({ ...s, end_date: e.target.value }))}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-end gap-3 pt-2">
+                      <button
+                        type="button"
+                        onClick={() => setIsEditingSubscription(false)}
+                        className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={savingSubscription || loadingPlans}
+                        className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {savingSubscription ? 'Saving...' : 'Save Changes'}
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-500">Plan</label>
+                      <p className="mt-1 text-sm text-gray-900 font-medium">
+                        {typeof company.subscription.plan === 'object' && company.subscription.plan !== null && 'name' in company.subscription.plan
+                          ? (company.subscription.plan as { name: string }).name
+                          : company.subscription.plan}
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-500">Status</label>
+                        <p className="mt-1">
+                          <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                            company.subscription.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                          }`}>
+                            {company.subscription.status}
+                          </span>
+                        </p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-500">Tier</label>
+                        <p className="mt-1 text-sm text-gray-900">
+                          {typeof company.subscription.plan === 'object' && company.subscription.plan !== null && 'tier' in company.subscription.plan
+                            ? (company.subscription.plan as { tier?: string }).tier ?? '—'
+                            : '—'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-500">Licensed Users</label>
+                        <p className="mt-1 text-sm text-gray-900">
+                          {company.subscription.current_users ?? 0} / {company.subscription.user_limit ?? company.subscription.max_users ?? '—'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-500">Start Date</label>
+                        <p className="mt-1 text-sm text-gray-900">{new Date(company.subscription.start_date).toLocaleDateString()}</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-500">End Date</label>
+                        <p className="mt-1 text-sm text-gray-900">{new Date(company.subscription.end_date).toLocaleDateString()}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 

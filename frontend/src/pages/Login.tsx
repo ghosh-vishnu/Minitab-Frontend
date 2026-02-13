@@ -8,6 +8,7 @@ import toast from 'react-hot-toast'
 interface LoginForm {
   email: string
   password: string
+  company_code: string
 }
 
 const Login = () => {
@@ -40,6 +41,11 @@ const Login = () => {
         toast.error('Please enter your email or username')
         setLoading(false)
         return
+      }
+
+      // Company code required for company users (backend validates); send if provided
+      if (data.company_code && data.company_code.trim()) {
+        loginData.company_code = data.company_code.trim().toUpperCase()
       }
       
       const response = await authAPI.login(loginData)
@@ -111,12 +117,32 @@ const Login = () => {
                 })}
                 type="password"
                 id="password"
+                autoComplete="current-password"
                 className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="Enter your password"
               />
               {errors.password && (
                 <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
               )}
+            </div>
+
+            {/* Licence Key - required for company login (Company Admin / Company User) */}
+            <div>
+              <label htmlFor="company_code" className="block text-sm font-medium text-gray-700 mb-1">
+                Licence Key
+              </label>
+              <input
+                {...register('company_code')}
+                type="text"
+                id="company_code"
+                autoComplete="off"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent uppercase"
+                placeholder="Enter licence key (required for company login)"
+                maxLength={20}
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                Required if you are a Company Admin or Company User. Get your licence key from your administrator.
+              </p>
             </div>
 
             {/* Keep me signed in

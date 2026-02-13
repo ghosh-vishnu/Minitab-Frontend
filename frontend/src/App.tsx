@@ -7,6 +7,7 @@ import Register from './pages/Register'
 import Dashboard from './pages/Dashboard'
 import SuperAdminDashboard from './pages/SuperAdminDashboard'
 import CompanyAdminDashboard from './pages/CompanyAdminDashboard'
+import CompanyAdminProfile from './pages/CompanyAdminProfile'
 import CompanyDetails from './pages/CompanyDetails'
 import UserDashboard from './pages/UserDashboard'
 import SpreadsheetsList from './pages/SpreadsheetsList'
@@ -75,6 +76,14 @@ function App() {
             element={
               <CompanyAdminRoute>
                 <CompanyAdminDashboard />
+              </CompanyAdminRoute>
+            }
+          />
+          <Route
+            path="/company-admin/profile"
+            element={
+              <CompanyAdminRoute>
+                <CompanyAdminProfile />
               </CompanyAdminRoute>
             }
           />

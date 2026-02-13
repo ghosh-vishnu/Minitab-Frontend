@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { usersAPI, User, CreateUserData } from '../api/users'
 import { companiesAPI, CompanyStats } from '../api/companies'
 import { rbacAPI, Role } from '../api/rbac'
@@ -125,6 +125,15 @@ export default function CompanyAdminDashboard() {
               </p>
             </div>
             <div className="flex items-center gap-3">
+              <Link
+                to="/company-admin/profile"
+                className="text-gray-700 hover:text-gray-900 hover:bg-gray-100 font-medium py-2 px-4 rounded-lg transition-colors flex items-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                Profile
+              </Link>
               <button
                 onClick={handleLogout}
                 className="text-gray-700 hover:text-gray-900 hover:bg-gray-100 font-medium py-2 px-4 rounded-lg transition-colors flex items-center gap-2"
@@ -151,7 +160,7 @@ export default function CompanyAdminDashboard() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* User Limit Alert */}
+        {/* User Limit & Subscription Expiry Alert */}
         {stats && (
           <div className={`mb-6 rounded-lg p-4 ${
             userLimitPercentage >= 90 
@@ -160,7 +169,7 @@ export default function CompanyAdminDashboard() {
               ? 'bg-yellow-50 border border-yellow-200'
               : 'bg-blue-50 border border-blue-200'
           }`}>
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
               <div className="flex items-center gap-2">
                 <svg className={`w-5 h-5 ${
                   userLimitPercentage >= 90 ? 'text-red-600' : 
@@ -175,6 +184,16 @@ export default function CompanyAdminDashboard() {
                   User Limit: {stats.total_users} / {stats.user_limit}
                 </span>
               </div>
+              {stats.subscription_end_date && (
+                <span className="text-sm font-medium text-gray-700">
+                  Subscription expires on: {new Date(stats.subscription_end_date).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}
+                  {stats.subscription_days_remaining !== undefined && stats.subscription_days_remaining >= 0 && (
+                    <span className="text-gray-500 ml-1">
+                      ({stats.subscription_days_remaining} days left)
+                    </span>
+                  )}
+                </span>
+              )}
               {isUserLimitReached && (
                 <span className="text-sm text-red-600 font-medium">Limit Reached - Upgrade to add more users</span>
               )}
@@ -304,7 +323,7 @@ export default function CompanyAdminDashboard() {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {new Date(u.created_at).toLocaleDateString()}
+                    {u.created_at ? new Date(u.created_at).toLocaleDateString() : '—'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex items-center justify-end gap-2">
