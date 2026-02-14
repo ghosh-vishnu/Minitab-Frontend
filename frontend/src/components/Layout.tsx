@@ -1,15 +1,29 @@
 import { Outlet, Link, useNavigate } from 'react-router-dom'
+import { useEffect } from 'react'
 import { useAuthStore } from '../store/authStore'
 import { authAPI } from '../api/auth'
 import toast from 'react-hot-toast'
 import { useState } from 'react'
 import { DialogProvider } from '../context/DialogContext'
 import { DialogContainer } from './StatDialogs'
+import CompanySuspendedScreen from './CompanySuspendedScreen'
 
 const Layout = () => {
-  const { user, logout: logoutStore, refreshToken } = useAuthStore()
+  const { user, logout: logoutStore, refreshToken, updateUser } = useAuthStore()
   const navigate = useNavigate()
   const [showSidebar, setShowSidebar] = useState(true)
+
+  // Refresh profile so we have latest company status (e.g. if company was suspended after user logged in)
+  useEffect(() => {
+    if (!user?.company) return
+    authAPI.getProfile()
+      .then((profile) => updateUser(profile))
+      .catch(() => {})
+  }, [user?.company?.id, updateUser])
+
+  if (user?.company?.status === 'suspended') {
+    return <CompanySuspendedScreen />
+  }
 
   const handleLogout = async () => {
     try {

@@ -5,6 +5,7 @@ import { companiesAPI, CompanyStats } from '../api/companies'
 import { rbacAPI, Role } from '../api/rbac'
 import { useAuthStore } from '../store/authStore'
 import { authAPI } from '../api/auth'
+import CompanySuspendedScreen from '../components/CompanySuspendedScreen'
 import toast from 'react-hot-toast'
 
 export default function CompanyAdminDashboard() {
@@ -102,6 +103,10 @@ export default function CompanyAdminDashboard() {
       logoutStore()
       navigate('/login')
     }
+  }
+
+  if (user?.company?.status === 'suspended') {
+    return <CompanySuspendedScreen />
   }
 
   if (loading) {

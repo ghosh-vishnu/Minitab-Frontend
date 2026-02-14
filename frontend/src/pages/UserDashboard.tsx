@@ -3,9 +3,14 @@ import { useAuthStore } from '../store/authStore'
 import { spreadsheetsAPI, Spreadsheet } from '../api/spreadsheets'
 import { analysisAPI, Analysis as AnalysisType } from '../api/analysis'
 import { Link } from 'react-router-dom'
+import CompanySuspendedScreen from '../components/CompanySuspendedScreen'
 
 export default function UserDashboard() {
   const { user, hasPermission } = useAuthStore()
+
+  if (user?.company?.status === 'suspended') {
+    return <CompanySuspendedScreen />
+  }
   const [spreadsheets, setSpreadsheets] = useState<Spreadsheet[]>([])
   const [analyses, setAnalyses] = useState<AnalysisType[]>([])
   const [loading, setLoading] = useState(true)

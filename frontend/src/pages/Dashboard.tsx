@@ -2,11 +2,16 @@ import { useEffect, useState, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { spreadsheetsAPI, Spreadsheet } from '../api/spreadsheets'
 import ExcelImportDialog from '../components/ExcelImportDialog'
+import CompanySuspendedScreen from '../components/CompanySuspendedScreen'
 import toast from 'react-hot-toast'
 import { useAuthStore } from '../store/authStore'
 
 const Dashboard = () => {
   const { user } = useAuthStore()
+
+  if (user?.company?.status === 'suspended') {
+    return <CompanySuspendedScreen />
+  }
   const [spreadsheets, setSpreadsheets] = useState<Spreadsheet[]>([])
   const [recentSheets, setRecentSheets] = useState<Spreadsheet[]>([])
   const [favoriteSheets, setFavoriteSheets] = useState<Spreadsheet[]>([])

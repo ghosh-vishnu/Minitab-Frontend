@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
 import { companiesAPI, Company } from '../api/companies'
+import CompanySuspendedScreen from '../components/CompanySuspendedScreen'
 import toast from 'react-hot-toast'
 
 export default function CompanyAdminProfile() {
@@ -9,6 +10,10 @@ export default function CompanyAdminProfile() {
   const [company, setCompany] = useState<Company | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  if (user?.company?.status === 'suspended') {
+    return <CompanySuspendedScreen />
+  }
 
   useEffect(() => {
     loadCompany()

@@ -6,6 +6,7 @@
 import { Outlet, Link, useNavigate, useParams } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
 import { authAPI } from '../api/auth'
+import CompanySuspendedScreen from './CompanySuspendedScreen'
 import toast from 'react-hot-toast'
 import { useState, useEffect, useRef } from 'react'
 import GraphBuilder from './GraphBuilder'
@@ -719,6 +720,10 @@ const MinitabLayout = () => {
       return user.username.substring(0, 2).toUpperCase()
     }
     return 'U'
+  }
+
+  if (user?.company?.status === 'suspended') {
+    return <CompanySuspendedScreen />
   }
 
   return (
