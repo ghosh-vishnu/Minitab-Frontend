@@ -1,5 +1,5 @@
-import { useEffect, useState, useRef } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { spreadsheetsAPI, Spreadsheet } from '../api/spreadsheets'
 import ExcelImportDialog from '../components/ExcelImportDialog'
 import CompanySuspendedScreen from '../components/CompanySuspendedScreen'
@@ -12,16 +12,13 @@ const Dashboard = () => {
   if (user?.company?.status === 'suspended') {
     return <CompanySuspendedScreen />
   }
-  const [spreadsheets, setSpreadsheets] = useState<Spreadsheet[]>([])
+  const [_spreadsheets, setSpreadsheets] = useState<Spreadsheet[]>([])
   const [recentSheets, setRecentSheets] = useState<Spreadsheet[]>([])
   const [favoriteSheets, setFavoriteSheets] = useState<Spreadsheet[]>([])
   const [loading, setLoading] = useState(true)
-  const [showCreateModal, setShowCreateModal] = useState(false)
-  const [newSpreadsheetName, setNewSpreadsheetName] = useState('')
   const [contentTab, setContentTab] = useState<'recent' | 'favorites' | 'connect' | 'onedrive' | 'sharepoint' | 'googledrive' | 'local'>('recent')
   const [showImportDialog, setShowImportDialog] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -48,27 +45,6 @@ const Dashboard = () => {
       setFavoriteSheets([])
     } finally {
       setLoading(false)
-    }
-  }
-
-  const handleCreateSpreadsheet = async () => {
-    if (!newSpreadsheetName.trim()) {
-      toast.error('Please enter a name')
-      return
-    }
-
-    try {
-      const spreadsheet = await spreadsheetsAPI.create({
-        name: newSpreadsheetName,
-        row_count: 100,
-        column_count: 26,
-      })
-      toast.success('Spreadsheet created successfully')
-      setShowCreateModal(false)
-      setNewSpreadsheetName('')
-      navigate(`/minitab/spreadsheet/${spreadsheet.id}`)
-    } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Failed to create spreadsheet')
     }
   }
 
@@ -145,7 +121,7 @@ const Dashboard = () => {
   }
 
   // Handle import from dialog
-  const handleImport = async (data: any, options: any) => {
+  const handleImport = async (_data: unknown, options: { selectedSheet?: string }) => {
     if (!selectedFile) return
 
     try {
@@ -173,7 +149,7 @@ const Dashboard = () => {
       // Show validation warnings if any
       if (response.validation?.warnings?.length > 0) {
         response.validation.warnings.forEach((warning: string) => {
-          toast.warning(warning, { duration: 5000 })
+          toast(warning, { duration: 5000, icon: '⚠️' })
         })
       }
 
@@ -263,17 +239,6 @@ const Dashboard = () => {
       </div>
     </div>
   )
-
-  // Get user initials for avatar
-  const getUserInitials = () => {
-    if (user?.first_name && user?.last_name) {
-      return `${user.first_name[0]}${user.last_name[0]}`.toUpperCase()
-    }
-    if (user?.username) {
-      return user.username.substring(0, 2).toUpperCase()
-    }
-    return 'U'
-  }
 
   return (
     <div className="h-full flex flex-col bg-white">

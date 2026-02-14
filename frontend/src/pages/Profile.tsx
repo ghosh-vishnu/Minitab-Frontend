@@ -42,7 +42,7 @@ const Profile = () => {
       const userData = await rbacAPI.getUser(currentUser.id)
       if (userData) {
         // Update auth store with full user data
-        updateUser(userData)
+        updateUser(userData as Parameters<typeof updateUser>[0])
       }
     } catch (error: any) {
       console.error('Failed to load user data:', error)

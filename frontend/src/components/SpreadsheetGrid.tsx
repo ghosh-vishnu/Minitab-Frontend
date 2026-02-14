@@ -57,8 +57,8 @@ const SpreadsheetGrid = ({
     for (let i = 0; i < columnCount; i++) {
       // Look for header in row 0
       const headerCell = cells.find(c => c.row_index === 0 && c.column_index === i)
-      if (headerCell && headerCell.value && headerCell.value.trim() !== '') {
-        headers.push(headerCell.value.toString().trim())
+      if (headerCell && headerCell.value != null && String(headerCell.value).trim() !== '') {
+        headers.push(String(headerCell.value).trim())
       } else {
         // Fallback to Excel-style column name
         headers.push(getColumnName(i))

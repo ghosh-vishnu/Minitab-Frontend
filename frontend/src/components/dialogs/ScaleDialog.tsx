@@ -89,7 +89,7 @@ export const ScaleDialog: React.FC<ScaleDialogProps> = ({
   onApply,
   cells,
   columnCount,
-  rowCount = 0,
+  rowCount: _rowCount = 0,
   initialTab = 'time',
   currentConfig,
 }) => {
@@ -199,7 +199,7 @@ export const ScaleDialog: React.FC<ScaleDialogProps> = ({
         setYScaleNumberOfTicks(currentConfig.axesConfig.yScaleNumberOfTicks?.toString() || '10')
         setYScaleTickPositions(Array.isArray(currentConfig.axesConfig.yScaleTickPositions) 
           ? currentConfig.axesConfig.yScaleTickPositions.join(' ')
-          : (currentConfig.axesConfig.yScaleTickPositions?.toString() || ''))
+          : (currentConfig.axesConfig.yScaleTickPositions != null ? String(currentConfig.axesConfig.yScaleTickPositions) : ''))
         setYScaleMinEnabled(currentConfig.axesConfig.yScaleMinEnabled !== false)
         setYScaleMinValue(currentConfig.axesConfig.yScaleMinValue?.toString() || '')
         setYScaleMaxEnabled(currentConfig.axesConfig.yScaleMaxEnabled !== false)

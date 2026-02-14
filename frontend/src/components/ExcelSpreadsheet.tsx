@@ -245,8 +245,8 @@ const ExcelSpreadsheet = ({
       )
 
       const isFormula = newValue.trim().startsWith('=')
-      const dataType = isFormula ? 'formula' : 'text'
-      const newCellData = {
+      const dataType: 'text' | 'number' | 'date' | 'formula' = isFormula ? 'formula' : 'text'
+      const newCellData: Cell = {
         row_index: rowIndex,
         column_index: columnIndex,
         value: newValue,

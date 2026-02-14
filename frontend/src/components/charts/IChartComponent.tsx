@@ -11,7 +11,6 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 import { calculateIChart, runTests, formatNumber } from '../../utils/chartCalculations'
-import toast from 'react-hot-toast'
 import { ScaleDialog } from '../dialogs/ScaleDialog'
 
 /**
@@ -47,20 +46,6 @@ function generateYAxisTicks(min: number, max: number): number[] {
   }
   
   return ticks.length > 0 ? ticks : [min, max]
-}
-
-/**
- * Generate Y-axis ticks with specific count
- */
-function generateYAxisTicksWithCount(min: number, max: number, count: number): number[] {
-  if (count <= 0) return generateYAxisTicks(min, max)
-  const range = max - min
-  const step = range / (count - 1)
-  const ticks: number[] = []
-  for (let i = 0; i < count; i++) {
-    ticks.push(min + step * i)
-  }
-  return ticks
 }
 
 /**
@@ -162,7 +147,7 @@ export const IChartComponent: React.FC<IChartComponentProps> = ({
   axesConfig,
   labelsConfig,
   onEditChart,
-  onOpenScaleDialog,
+  onOpenScaleDialog: _onOpenScaleDialog,
   columnCount = 0,
   rowCount = 0,
   onScaleConfigChange,
@@ -277,13 +262,15 @@ export const IChartComponent: React.FC<IChartComponentProps> = ({
     
     // Override with manual values if provided (when checkboxes are checked)
     if (axesConfig?.yScaleMinValue !== undefined) {
-      const minValue = typeof axesConfig.yScaleMinValue === 'number' ? axesConfig.yScaleMinValue : parseFloat(axesConfig.yScaleMinValue.toString())
+      const rawMin = axesConfig.yScaleMinValue
+      const minValue = typeof rawMin === 'number' ? rawMin : parseFloat(String(rawMin))
       if (!isNaN(minValue)) {
         yAxisMin = minValue
       }
     }
     if (axesConfig?.yScaleMaxValue !== undefined) {
-      const maxValue = typeof axesConfig.yScaleMaxValue === 'number' ? axesConfig.yScaleMaxValue : parseFloat(axesConfig.yScaleMaxValue.toString())
+      const rawMax = axesConfig.yScaleMaxValue
+      const maxValue = typeof rawMax === 'number' ? rawMax : parseFloat(String(rawMax))
       if (!isNaN(maxValue)) {
         yAxisMax = maxValue
       }
@@ -308,15 +295,15 @@ export const IChartComponent: React.FC<IChartComponentProps> = ({
   const getYAxisTicks = (): number[] => {
     if (axesConfig?.yScaleTickMode === 'position' && axesConfig?.yScaleTickPositions) {
       // Use custom tick positions
-      const positions = Array.isArray(axesConfig.yScaleTickPositions) 
-        ? axesConfig.yScaleTickPositions 
-        : axesConfig.yScaleTickPositions.toString().split(/\s+/).map(v => parseFloat(v)).filter(v => !isNaN(v))
-      return positions.filter(tick => tick >= yAxisMin && tick <= yAxisMax)
+      const positions = Array.isArray(axesConfig.yScaleTickPositions)
+        ? axesConfig.yScaleTickPositions
+        : String(axesConfig.yScaleTickPositions).split(/\s+/).map((v: string) => parseFloat(v)).filter((v: number) => !isNaN(v))
+      return positions.filter((tick: number) => tick >= yAxisMin && tick <= yAxisMax)
     } else if (axesConfig?.yScaleTickMode === 'number' && axesConfig?.yScaleNumberOfTicks) {
       // Use specified number of ticks
-      const numTicks = typeof axesConfig.yScaleNumberOfTicks === 'number' 
-        ? axesConfig.yScaleNumberOfTicks 
-        : parseInt(axesConfig.yScaleNumberOfTicks.toString())
+      const numTicks = typeof axesConfig.yScaleNumberOfTicks === 'number'
+        ? axesConfig.yScaleNumberOfTicks
+        : parseInt(String(axesConfig.yScaleNumberOfTicks), 10)
       if (!isNaN(numTicks) && numTicks > 0) {
         const step = (yAxisMax - yAxisMin) / (numTicks - 1)
         return Array.from({ length: numTicks }, (_, i) => yAxisMin + i * step)
@@ -573,7 +560,7 @@ export const IChartComponent: React.FC<IChartComponentProps> = ({
                       fontSize={11}
                       style={{ cursor: 'pointer' }}
                       onClick={() => {
-                        setScaleDialogTab('scale')
+                        setScaleDialogTab('axes')
                         setScaleDialogConfig({
                           xScaleType: xScaleType || 'index',
                           stampColumn: stampColumn,
@@ -667,7 +654,7 @@ export const IChartComponent: React.FC<IChartComponentProps> = ({
                 textAlign: 'center',
               }}
               iconType="line"
-              content={({ payload }: any) => {
+              content={({ payload: _payload }: { payload?: unknown }) => {
                 // Only render X-axis label, hide legend items
                 return (
                   <g>

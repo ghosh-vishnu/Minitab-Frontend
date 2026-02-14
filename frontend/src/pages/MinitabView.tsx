@@ -166,7 +166,7 @@ const MinitabView = () => {
       setIsSaving(true)
       
       // Update spreadsheet name first
-      const updatedSpreadsheet = await spreadsheetsAPI.update(id, {
+      await spreadsheetsAPI.update(id, {
         name: newFileName.trim(),
       })
 

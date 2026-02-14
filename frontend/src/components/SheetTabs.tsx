@@ -26,7 +26,7 @@ interface SheetTabsProps {
 }
 
 const SheetTabs = ({
-  spreadsheetId,
+  spreadsheetId: _spreadsheetId,
   worksheets,
   activeWorksheet,
   onSelectWorksheet,
@@ -98,7 +98,7 @@ const SheetTabs = ({
     [worksheets.length, onDeleteWorksheet]
   )
 
-  const handleRightClick = (e: React.MouseEvent<HTMLDivElement>, worksheetId: string) => {
+  const handleRightClick = (e: React.MouseEvent<HTMLElement>, worksheetId: string) => {
     e.preventDefault()
     e.stopPropagation()
     setShowContextMenu({

@@ -54,13 +54,13 @@ const MinitabWebDemo = () => {
     if (itemId === 'home') {
       navigate('/dashboard')
     } else if (itemId === 'open') {
-      toast.info('Open file dialog - coming soon')
+      toast('Open file dialog - coming soon')
     }
   }
 
   const handleMenuClick = (menuId: string, itemId?: string) => {
     if (itemId) {
-      toast.info(`${menuId} → ${itemId} - Feature coming soon`)
+      toast(`${menuId} → ${itemId} - Feature coming soon`)
     } else {
       console.log('Menu clicked:', menuId)
     }
@@ -69,12 +69,12 @@ const MinitabWebDemo = () => {
   const handleSearch = (query: string) => {
     console.log('Search:', query)
     if (query) {
-      toast.info(`Searching for: ${query}`)
+      toast(`Searching for: ${query}`)
     }
   }
 
   const handleHelp = () => {
-    toast.info('Help documentation - coming soon')
+    toast('Help documentation - coming soon')
   }
 
   const handleSettings = () => {

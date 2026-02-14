@@ -1,10 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { spreadsheetsAPI, Spreadsheet, Cell, Worksheet } from '../api/spreadsheets'
-import { analysisAPI } from '../api/analysis'
-import { chartsAPI, Chart } from '../api/charts'
 import SpreadsheetGrid from '../components/SpreadsheetGrid'
-import ExcelSpreadsheet from '../components/ExcelSpreadsheet'
 import AnalysisPanel from '../components/AnalysisPanel'
 import ChartsPanel from '../components/ChartsPanel'
 import SheetTabs from '../components/SheetTabs'
@@ -213,16 +210,13 @@ const SpreadsheetView = () => {
     try {
       let blob: Blob
       let filename: string
-      let mimeType: string
 
       if (format === 'csv') {
-        blob = await spreadsheetsAPI.exportCSV(id, spreadsheet.name)
+        blob = await spreadsheetsAPI.exportCSV(id)
         filename = `${spreadsheet.name}.csv`
-        mimeType = 'text/csv'
       } else {
-        blob = await spreadsheetsAPI.exportExcel(id, spreadsheet.name)
+        blob = await spreadsheetsAPI.exportExcel(id)
         filename = `${spreadsheet.name}.xlsx`
-        mimeType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
       }
 
       const url = window.URL.createObjectURL(blob)

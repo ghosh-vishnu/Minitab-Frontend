@@ -124,7 +124,7 @@ export const useAuthStore = create<AuthState>()(
     {
       name: 'auth-storage',
       storage: createJSONStorage(() => localStorage),
-      migrate: (persistedState: any, version: number) => {
+      migrate: (persistedState: any, _version: number) => {
         // Handle migration of old user types
         if (persistedState?.user?.user_type === 'CHILD') {
           persistedState.user.user_type = 'COMPANY_ADMIN'

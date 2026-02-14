@@ -163,7 +163,7 @@ class SpreadsheetService {
   /**
    * Auto-save cells (debounced)
    */
-  private saveTimeout: NodeJS.Timeout | null = null
+  private saveTimeout: ReturnType<typeof setTimeout> | null = null
 
   async autoSave(
     spreadsheetId: string,

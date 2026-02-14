@@ -3,9 +3,8 @@
  * Mimics Minitab Statistical Software interface
  */
 
-import { Outlet, Link, useNavigate, useParams } from 'react-router-dom'
+import { Outlet, Link, useParams } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
-import { authAPI } from '../api/auth'
 import CompanySuspendedScreen from './CompanySuspendedScreen'
 import toast from 'react-hot-toast'
 import { useState, useEffect, useRef } from 'react'
@@ -45,7 +44,7 @@ const WorksheetChartsNavigator: React.FC<WorksheetChartsNavigatorProps> = ({
   charts,
   selectedChartId,
   onChartSelect,
-  onViewAllCharts,
+  onViewAllCharts: _onViewAllCharts,
   onDeleteChart,
   onRenameChart,
 }) => {
@@ -447,8 +446,7 @@ const STAT_MENU_ITEMS = [
 ]
 
 const MinitabLayout = () => {
-  const { user, logout: logoutStore, refreshToken } = useAuthStore()
-  const navigate = useNavigate()
+  const { user } = useAuthStore()
   const { id: spreadsheetId } = useParams<{ id?: string }>()
   const { openModal } = useModal()
   const [cells, setCells] = useState<Cell[]>([])
@@ -524,7 +522,9 @@ const MinitabLayout = () => {
     } // Chart labels configuration
   }
   const [allSavedCharts, setAllSavedCharts] = useState<SavedChart[]>([]) // All saved charts
-  const [displayedCharts, setDisplayedCharts] = useState<SavedChart[]>([]) // Charts currently displayed
+  // Charts currently displayed (subset of fields needed for rendering)
+  type DisplayedChartItem = { columnId: string; columnName: string; values: number[]; scaleConfig?: SavedChart['scaleConfig']; labelsConfig?: SavedChart['labelsConfig'] }
+  const [displayedCharts, setDisplayedCharts] = useState<DisplayedChartItem[]>([]) // Charts currently displayed
   const [selectedChartId, setSelectedChartId] = useState<string | null>(null) // Currently viewed chart
   const [editingChartConfig, setEditingChartConfig] = useState<{
     selectedColumn?: string
@@ -695,21 +695,6 @@ const MinitabLayout = () => {
       document.removeEventListener('mousedown', handleClickOutside)
     }
   }, [showNavigatorDropdown, showDataMenu, showGraphMenu])
-
-  const handleLogout = async () => {
-    try {
-      if (refreshToken) {
-        await authAPI.logout(refreshToken)
-      }
-      logoutStore()
-      navigate('/login')
-      toast.success('Logged out successfully')
-    } catch (error) {
-      console.error('Logout error:', error)
-      logoutStore()
-      navigate('/login')
-    }
-  }
 
   // Get user initials for avatar
   const getUserInitials = () => {
@@ -1240,7 +1225,7 @@ const MinitabLayout = () => {
                   
                   <button
                     onClick={() => {
-                      toast.info('Scatterplot... coming soon')
+                      toast('Scatterplot... coming soon')
                       setShowGraphMenu(false)
                     }}
                     className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -1249,7 +1234,7 @@ const MinitabLayout = () => {
                   </button>
                   <button
                     onClick={() => {
-                      toast.info('Binned Scatterplot... coming soon')
+                      toast('Binned Scatterplot... coming soon')
                       setShowGraphMenu(false)
                     }}
                     className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -1258,7 +1243,7 @@ const MinitabLayout = () => {
                   </button>
                   <button
                     onClick={() => {
-                      toast.info('Matrix Plot... coming soon')
+                      toast('Matrix Plot... coming soon')
                       setShowGraphMenu(false)
                     }}
                     className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -1267,7 +1252,7 @@ const MinitabLayout = () => {
                   </button>
                   <button
                     onClick={() => {
-                      toast.info('Correlogram... coming soon')
+                      toast('Correlogram... coming soon')
                       setShowGraphMenu(false)
                     }}
                     className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -1276,7 +1261,7 @@ const MinitabLayout = () => {
                   </button>
                   <button
                     onClick={() => {
-                      toast.info('Bubble Plot... coming soon')
+                      toast('Bubble Plot... coming soon')
                       setShowGraphMenu(false)
                     }}
                     className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -1285,7 +1270,7 @@ const MinitabLayout = () => {
                   </button>
                   <button
                     onClick={() => {
-                      toast.info('Marginal Plot... coming soon')
+                      toast('Marginal Plot... coming soon')
                       setShowGraphMenu(false)
                     }}
                     className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -1297,7 +1282,7 @@ const MinitabLayout = () => {
                   
                   <button
                     onClick={() => {
-                      toast.info('Histogram... coming soon')
+                      toast('Histogram... coming soon')
                       setShowGraphMenu(false)
                     }}
                     className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -1306,7 +1291,7 @@ const MinitabLayout = () => {
                   </button>
                   <button
                     onClick={() => {
-                      toast.info('Dotplot... coming soon')
+                      toast('Dotplot... coming soon')
                       setShowGraphMenu(false)
                     }}
                     className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -1315,7 +1300,7 @@ const MinitabLayout = () => {
                   </button>
                   <button
                     onClick={() => {
-                      toast.info('Stem-and-Leaf... coming soon')
+                      toast('Stem-and-Leaf... coming soon')
                       setShowGraphMenu(false)
                     }}
                     className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -1324,7 +1309,7 @@ const MinitabLayout = () => {
                   </button>
                   <button
                     onClick={() => {
-                      toast.info('Probability Plot... coming soon')
+                      toast('Probability Plot... coming soon')
                       setShowGraphMenu(false)
                     }}
                     className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -1333,7 +1318,7 @@ const MinitabLayout = () => {
                   </button>
                   <button
                     onClick={() => {
-                      toast.info('Empirical CDF... coming soon')
+                      toast('Empirical CDF... coming soon')
                       setShowGraphMenu(false)
                     }}
                     className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -1342,7 +1327,7 @@ const MinitabLayout = () => {
                   </button>
                   <button
                     onClick={() => {
-                      toast.info('Probability Distribution Plot... coming soon')
+                      toast('Probability Distribution Plot... coming soon')
                       setShowGraphMenu(false)
                     }}
                     className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -1354,7 +1339,7 @@ const MinitabLayout = () => {
                   
                   <button
                     onClick={() => {
-                      toast.info('Boxplot... coming soon')
+                      toast('Boxplot... coming soon')
                       setShowGraphMenu(false)
                     }}
                     className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -1363,7 +1348,7 @@ const MinitabLayout = () => {
                   </button>
                   <button
                     onClick={() => {
-                      toast.info('Interval Plot... coming soon')
+                      toast('Interval Plot... coming soon')
                       setShowGraphMenu(false)
                     }}
                     className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -1372,7 +1357,7 @@ const MinitabLayout = () => {
                   </button>
                   <button
                     onClick={() => {
-                      toast.info('Individual Value Plot... coming soon')
+                      toast('Individual Value Plot... coming soon')
                       setShowGraphMenu(false)
                     }}
                     className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -1381,7 +1366,7 @@ const MinitabLayout = () => {
                   </button>
                   <button
                     onClick={() => {
-                      toast.info('Line Plot... coming soon')
+                      toast('Line Plot... coming soon')
                       setShowGraphMenu(false)
                     }}
                     className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -1390,7 +1375,7 @@ const MinitabLayout = () => {
                   </button>
                   <button
                     onClick={() => {
-                      toast.info('Parallel Coordinates Plot... coming soon')
+                      toast('Parallel Coordinates Plot... coming soon')
                       setShowGraphMenu(false)
                     }}
                     className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -1403,7 +1388,7 @@ const MinitabLayout = () => {
                   <div className="relative group">
                     <button
                       onClick={() => {
-                        toast.info('Bar Chart submenu coming soon')
+                        toast('Bar Chart submenu coming soon')
                         setShowGraphMenu(false)
                       }}
                       className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center justify-between"
@@ -1416,7 +1401,7 @@ const MinitabLayout = () => {
                   </div>
                   <button
                     onClick={() => {
-                      toast.info('Heatmap... coming soon')
+                      toast('Heatmap... coming soon')
                       setShowGraphMenu(false)
                     }}
                     className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -1425,7 +1410,7 @@ const MinitabLayout = () => {
                   </button>
                   <button
                     onClick={() => {
-                      toast.info('Pie Chart... coming soon')
+                      toast('Pie Chart... coming soon')
                       setShowGraphMenu(false)
                     }}
                     className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -1437,7 +1422,7 @@ const MinitabLayout = () => {
                   
                   <button
                     onClick={() => {
-                      toast.info('Time Series Plot... coming soon')
+                      toast('Time Series Plot... coming soon')
                       setShowGraphMenu(false)
                     }}
                     className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -1446,7 +1431,7 @@ const MinitabLayout = () => {
                   </button>
                   <button
                     onClick={() => {
-                      toast.info('Area Graph... coming soon')
+                      toast('Area Graph... coming soon')
                       setShowGraphMenu(false)
                     }}
                     className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -1455,7 +1440,7 @@ const MinitabLayout = () => {
                   </button>
                   <button
                     onClick={() => {
-                      toast.info('Contour Plot... coming soon')
+                      toast('Contour Plot... coming soon')
                       setShowGraphMenu(false)
                     }}
                     className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -1464,7 +1449,7 @@ const MinitabLayout = () => {
                   </button>
                   <button
                     onClick={() => {
-                      toast.info('3D Scatterplot... coming soon')
+                      toast('3D Scatterplot... coming soon')
                       setShowGraphMenu(false)
                     }}
                     className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -1473,7 +1458,7 @@ const MinitabLayout = () => {
                   </button>
                   <button
                     onClick={() => {
-                      toast.info('3D Surface Plot... coming soon')
+                      toast('3D Surface Plot... coming soon')
                       setShowGraphMenu(false)
                     }}
                     className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -1654,7 +1639,7 @@ const MinitabLayout = () => {
                         }
                       }
                     }}
-                    onViewAllCharts={(worksheetId, wsCharts) => {
+                    onViewAllCharts={(_worksheetId, wsCharts) => {
                       // Show all charts for this worksheet
                       setDisplayedCharts(wsCharts)
                       setSelectedChartId(null) // Clear selection to show all
@@ -1875,8 +1860,6 @@ const MinitabLayout = () => {
               
               if (existingGroup.isRange) {
                 // This is a range group - update ONLY the specific chart(s) being edited
-                const editedColumnIds = chartData.map(c => c.columnId)
-                
                 // Update charts that match the edited columns with their individual configs
                 const updatedAllCharts = existingGroup.allCharts.map(chart => {
                   const editedChart = chartData.find(c => c.columnId === chart.columnId)
