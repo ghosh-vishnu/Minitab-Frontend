@@ -10,6 +10,8 @@ export interface Company {
   email: string
   status: 'active' | 'inactive' | 'suspended' | 'pending'
   is_active: boolean
+  /** Set when getMyCompany is fetched; used to filter modules/submodules by company access */
+  module_access?: Record<string, string[]>
 }
 
 export interface Role {
@@ -42,14 +44,30 @@ interface User {
   permissions?: Permission[]
 }
 
+/** Full company details from getMyCompany (includes effective_module_access for UI filtering) */
+export interface CompanyDetail {
+  id: string
+  name: string
+  company_code?: string
+  email?: string
+  status?: string
+  is_active?: boolean
+  module_access?: Record<string, string[]>
+  /** Current user's effective access (company ∩ user restriction). Use for filtering UI. */
+  effective_module_access?: Record<string, string[]>
+}
+
 interface AuthState {
   user: User | null
   accessToken: string | null
   refreshToken: string | null
   isAuthenticated: boolean
+  /** Company with module_access; set when getMyCompany is fetched (dashboard / minitab) */
+  companyDetail: CompanyDetail | null
   setAuth: (user: User, accessToken: string, refreshToken: string) => void
   logout: () => void
   updateUser: (user: User) => void
+  setCompanyDetail: (company: CompanyDetail | null) => void
   // Helper methods
   isSuperAdmin: () => boolean
   isCompanyAdmin: () => boolean
@@ -65,6 +83,7 @@ export const useAuthStore = create<AuthState>()(
       accessToken: null,
       refreshToken: null,
       isAuthenticated: false,
+      companyDetail: null,
       setAuth: (user, accessToken, refreshToken) => {
         // Normalize user type for backward compatibility
         if (user && user.user_type === 'CHILD' as any) {
@@ -83,8 +102,10 @@ export const useAuthStore = create<AuthState>()(
           accessToken: null,
           refreshToken: null,
           isAuthenticated: false,
+          companyDetail: null,
         }),
       updateUser: (user) => set({ user }),
+      setCompanyDetail: (company) => set({ companyDetail: company }),
       
       // Helper methods
       isSuperAdmin: () => {
@@ -112,7 +133,13 @@ export const useAuthStore = create<AuthState>()(
         if (!user) return false
         // Super admin has all permissions
         if (get().isSuperAdmin()) return true
-        return user.permissions?.some(p => p.codename === codename) || false
+        // Company admin has all permissions (matches backend)
+        if (get().isCompanyAdmin()) return true
+        if (user.permissions?.some(p => p.codename === codename)) return true
+        // Company user with no roles (empty permissions): default viewer access so dashboard loads
+        const defaultViewer = ['view_spreadsheet', 'export_spreadsheet', 'view_analysis', 'view_chart', 'access_statistical_software']
+        if (user.company && (!user.permissions || user.permissions.length === 0) && defaultViewer.includes(codename)) return true
+        return false
       },
       
       hasRole: (roleName: string) => {

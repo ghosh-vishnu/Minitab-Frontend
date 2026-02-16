@@ -3,7 +3,7 @@
  * Complete Minitab interface with grid, analysis, and charts
  */
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { spreadsheetsAPI, Spreadsheet, Cell, Worksheet } from '../api/spreadsheets'
 import MinitabGrid from '../components/MinitabGrid'
@@ -11,16 +11,41 @@ import AnalysisPanel from '../components/AnalysisPanel'
 import ChartsPanel from '../components/ChartsPanel'
 import SheetTabs from '../components/SheetTabs'
 import toast from 'react-hot-toast'
+import { useAuthStore } from '../store/authStore'
 
 const MinitabView = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const { user, companyDetail } = useAuthStore()
   const [spreadsheet, setSpreadsheet] = useState<Spreadsheet | null>(null)
   const [cells, setCells] = useState<Cell[]>([])
   const [worksheets, setWorksheets] = useState<Worksheet[]>([])
   const [activeWorksheet, setActiveWorksheet] = useState<Worksheet | null>(null)
   const [loading, setLoading] = useState(true)
-  const [activeView, setActiveView] = useState<'data' | 'analysis' | 'charts'>('data')
+  type ViewTab = 'data' | 'calc' | 'analysis' | 'charts'
+  const [activeView, setActiveView] = useState<ViewTab>('data')
+
+  // Allowed submodules: use effective (per-user) or company access. data=Data tab, calc=Calc tab, stat=Analysis, graph=Charts
+  const effectiveAccess = companyDetail?.effective_module_access ?? companyDetail?.module_access
+  const allowedTabs = useMemo(() => {
+    const subs = effectiveAccess?.statistical_software
+    const showAll = !user?.company || subs === undefined || subs.length === 0
+    if (showAll) return { data: true, calc: true, analysis: true, charts: true }
+    return {
+      data: subs?.includes('data') ?? false,
+      calc: subs?.includes('calc') ?? false,
+      analysis: subs?.includes('stat') ?? false,
+      charts: subs?.includes('graph') ?? false,
+    }
+  }, [user?.company, effectiveAccess?.statistical_software])
+
+  const firstAllowedView = useMemo((): ViewTab => {
+    if (allowedTabs.data) return 'data'
+    if (allowedTabs.calc) return 'calc'
+    if (allowedTabs.analysis) return 'analysis'
+    if (allowedTabs.charts) return 'charts'
+    return 'data'
+  }, [allowedTabs])
   const [isSaving, setIsSaving] = useState(false)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const [showRenameModal, setShowRenameModal] = useState(false)
@@ -36,6 +61,16 @@ const MinitabView = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
+
+  // When allowed tabs change, switch to first allowed if current is not allowed
+  useEffect(() => {
+    const currentAllowed =
+      (activeView === 'data' && allowedTabs.data) ||
+      (activeView === 'calc' && allowedTabs.calc) ||
+      (activeView === 'analysis' && allowedTabs.analysis) ||
+      (activeView === 'charts' && allowedTabs.charts)
+    if (!currentAllowed) setActiveView(firstAllowedView)
+  }, [allowedTabs, firstAllowedView, activeView])
 
   const loadSpreadsheet = async () => {
     if (!id || id === 'undefined') {
@@ -290,39 +325,57 @@ const MinitabView = () => {
         </button>
       </div>
 
-      {/* View Tabs */}
+      {/* View Tabs - Data (spreadsheet), Calc, Analysis, Charts - only show allowed by submodule access */}
       <div className="border-b border-gray-300 bg-white">
-        <div className="flex items-center px-4">
-          <button
-            onClick={() => setActiveView('data')}
-            className={`px-4 py-2 text-sm font-medium border-b-2 ${
-              activeView === 'data'
-                ? 'border-blue-600 text-blue-600'
-                : 'border-transparent text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            Data
-          </button>
-          <button
-            onClick={() => setActiveView('analysis')}
-            className={`px-4 py-2 text-sm font-medium border-b-2 ${
-              activeView === 'analysis'
-                ? 'border-blue-600 text-blue-600'
-                : 'border-transparent text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            Analysis
-          </button>
-          <button
-            onClick={() => setActiveView('charts')}
-            className={`px-4 py-2 text-sm font-medium border-b-2 ${
-              activeView === 'charts'
-                ? 'border-blue-600 text-blue-600'
-                : 'border-transparent text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            Charts
-          </button>
+        <div className="flex items-center px-4 gap-1">
+          {allowedTabs.data && (
+            <button
+              onClick={() => setActiveView('data')}
+              className={`px-4 py-2 text-sm font-medium border-b-2 ${
+                activeView === 'data'
+                  ? 'border-blue-600 text-blue-600'
+                  : 'border-transparent text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Data
+            </button>
+          )}
+          {allowedTabs.calc && (
+            <button
+              onClick={() => setActiveView('calc')}
+              className={`px-4 py-2 text-sm font-medium border-b-2 ${
+                activeView === 'calc'
+                  ? 'border-blue-600 text-blue-600'
+                  : 'border-transparent text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Calc
+            </button>
+          )}
+          {allowedTabs.analysis && (
+            <button
+              onClick={() => setActiveView('analysis')}
+              className={`px-4 py-2 text-sm font-medium border-b-2 ${
+                activeView === 'analysis'
+                  ? 'border-blue-600 text-blue-600'
+                  : 'border-transparent text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Analysis
+            </button>
+          )}
+          {allowedTabs.charts && (
+            <button
+              onClick={() => setActiveView('charts')}
+              className={`px-4 py-2 text-sm font-medium border-b-2 ${
+                activeView === 'charts'
+                  ? 'border-blue-600 text-blue-600'
+                  : 'border-transparent text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Charts
+            </button>
+          )}
         </div>
       </div>
 
@@ -343,6 +396,32 @@ const MinitabView = () => {
                 await spreadsheetsAPI.saveWorksheetNames(spreadsheet.id, names)
               }}
             />
+          )}
+
+          {activeView === 'calc' && (
+            <div className="h-full overflow-auto p-4">
+              <div className="max-w-2xl">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Calc</h3>
+                <p className="text-sm text-gray-600 mb-4">Calculator, Column Statistics, Row Statistics, and other calc tools.</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <button type="button" className="p-3 border border-gray-200 rounded-lg text-left hover:bg-gray-50 text-sm font-medium text-gray-900">
+                    Calculator...
+                  </button>
+                  <button type="button" className="p-3 border border-gray-200 rounded-lg text-left hover:bg-gray-50 text-sm font-medium text-gray-900">
+                    Column Statistics...
+                  </button>
+                  <button type="button" className="p-3 border border-gray-200 rounded-lg text-left hover:bg-gray-50 text-sm font-medium text-gray-900">
+                    Row Statistics...
+                  </button>
+                  <button type="button" className="p-3 border border-gray-200 rounded-lg text-left hover:bg-gray-50 text-sm font-medium text-gray-900">
+                    Standardize...
+                  </button>
+                  <button type="button" className="p-3 border border-gray-200 rounded-lg text-left hover:bg-gray-50 text-sm font-medium text-gray-900">
+                    Make Indicator Variables...
+                  </button>
+                </div>
+              </div>
+            </div>
           )}
 
           {activeView === 'analysis' && (

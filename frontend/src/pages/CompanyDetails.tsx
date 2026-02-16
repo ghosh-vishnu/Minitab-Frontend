@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { companiesAPI, Company, UpdateCompanyData } from '../api/companies'
+import { companiesAPI, Company, UpdateCompanyData, ProductModule } from '../api/companies'
 import { subscriptionsAPI, plansAPI } from '../api/subscriptions'
 import type { SubscriptionPlan } from '../types/subscription'
 import toast from 'react-hot-toast'
@@ -25,6 +25,18 @@ export default function CompanyDetails() {
   const [plans, setPlans] = useState<SubscriptionPlan[]>([])
   const [loadingPlans, setLoadingPlans] = useState(false)
   const [savingSubscription, setSavingSubscription] = useState(false)
+  const [productModules, setProductModules] = useState<ProductModule[]>([])
+  const [isEditingModuleAccess, setIsEditingModuleAccess] = useState(false)
+  const [moduleAccessForm, setModuleAccessForm] = useState<Record<string, string[]>>({})
+  const [savingModuleAccess, setSavingModuleAccess] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    companiesAPI.getProductModules().then((data) => {
+      if (!cancelled) setProductModules(data)
+    }).catch(() => { if (!cancelled) setProductModules([]) })
+    return () => { cancelled = true }
+  }, [])
 
   useEffect(() => {
     if (id) {
@@ -46,6 +58,7 @@ export default function CompanyDetails() {
         phone: data.phone || '',
         address: data.address_line1 || data.address || '',
         website: data.website || '',
+        module_access: data.module_access ?? {},
       })
       if (data.subscription) {
         const limit = data.subscription.user_limit ?? data.subscription.max_users ?? 1
@@ -151,6 +164,32 @@ export default function CompanyDetails() {
     })
     if (plans.length === 0) loadPlans()
     setIsEditingSubscription(true)
+  }
+
+  const startEditModuleAccess = () => {
+    setModuleAccessForm({ ...(company?.module_access ?? {}) })
+    setIsEditingModuleAccess(true)
+  }
+
+  const cancelEditModuleAccess = () => {
+    setIsEditingModuleAccess(false)
+    setModuleAccessForm({})
+  }
+
+  const handleSaveModuleAccess = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!id) return
+    try {
+      setSavingModuleAccess(true)
+      await companiesAPI.updateCompany(id, { module_access: moduleAccessForm })
+      toast.success('Module access updated')
+      await loadCompany()
+      setIsEditingModuleAccess(false)
+    } catch (err: any) {
+      toast.error(err.response?.data?.detail || 'Failed to update module access')
+    } finally {
+      setSavingModuleAccess(false)
+    }
   }
 
   const handleSaveSubscription = async (e: React.FormEvent) => {
@@ -345,6 +384,7 @@ export default function CompanyDetails() {
                           phone: company.phone || '',
                           address: company.address || '',
                           website: company.website || '',
+                          module_access: company.module_access ?? {},
                         })
                       }}
                       className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
@@ -550,6 +590,144 @@ export default function CompanyDetails() {
                 )}
               </div>
             )}
+
+            {/* Module Access */}
+            <div className="bg-white rounded-lg shadow p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-gray-900">Module Access</h2>
+                {!isEditingModuleAccess && (
+                  <button
+                    type="button"
+                    onClick={startEditModuleAccess}
+                    className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                  >
+                    Edit
+                  </button>
+                )}
+              </div>
+
+              {isEditingModuleAccess ? (
+                <form onSubmit={handleSaveModuleAccess} className="space-y-4">
+                  <p className="text-sm text-gray-600 mb-2">
+                    Select which product modules and submodules this company can access.
+                  </p>
+                  {productModules.map((mod) => {
+                    const selectedSubs = moduleAccessForm[mod.id] ?? []
+                    const isModuleChecked = selectedSubs.length > 0 ||
+                      (mod.submodules.length === 0 && mod.id in moduleAccessForm)
+                    const toggleModule = () => {
+                      const next = { ...moduleAccessForm }
+                      if (isModuleChecked) delete next[mod.id]
+                      else next[mod.id] = mod.submodules.length === 0 ? [] : mod.submodules.map((s) => s.id)
+                      setModuleAccessForm(next)
+                    }
+                    const toggleSub = (subId: string) => {
+                      const next = { ...moduleAccessForm }
+                      const list = [...(next[mod.id] ?? [])]
+                      const idx = list.indexOf(subId)
+                      if (idx === -1) list.push(subId)
+                      else list.splice(idx, 1)
+                      next[mod.id] = list
+                      setModuleAccessForm(next)
+                    }
+                    const selectAllSubs = () => {
+                      setModuleAccessForm((prev) => ({ ...prev, [mod.id]: mod.submodules.map((s) => s.id) }))
+                    }
+                    const clearSubs = () => {
+                      setModuleAccessForm((prev) => ({ ...prev, [mod.id]: [] }))
+                    }
+                    return (
+                      <div key={mod.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50/50">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={isModuleChecked}
+                            onChange={toggleModule}
+                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          />
+                          <span className="font-medium text-gray-900">{mod.name}</span>
+                          {mod.description && (
+                            <span className="text-sm text-gray-500">— {mod.description}</span>
+                          )}
+                        </label>
+                        {mod.submodules.length > 0 && (
+                          <div className="ml-6 mt-3 space-y-2">
+                            <div className="flex items-center gap-2">
+                              <button type="button" onClick={selectAllSubs} className="text-xs text-blue-600 hover:text-blue-800">
+                                Select all
+                              </button>
+                              <span className="text-gray-400">|</span>
+                              <button type="button" onClick={clearSubs} className="text-xs text-gray-500 hover:text-gray-700">
+                                Clear
+                              </button>
+                            </div>
+                            <div className="flex flex-wrap gap-x-4 gap-y-1">
+                              {mod.submodules.map((sub) => (
+                                <label key={sub.id} className="flex items-center gap-1.5 cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedSubs.includes(sub.id)}
+                                    onChange={() => toggleSub(sub.id)}
+                                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                  />
+                                  <span className="text-sm text-gray-700">{sub.name}</span>
+                                </label>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                  <div className="flex items-center justify-end gap-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={cancelEditModuleAccess}
+                      className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={savingModuleAccess}
+                      className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {savingModuleAccess ? 'Saving...' : 'Save Module Access'}
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <div className="space-y-2">
+                  {Object.keys(company.module_access ?? {}).length === 0 ? (
+                    <p className="text-sm text-gray-500">No modules assigned.</p>
+                  ) : (
+                    productModules.length === 0 ? (
+                      <p className="text-sm text-gray-500">Loading...</p>
+                    ) : (
+                      <ul className="space-y-2">
+                        {productModules
+                          .filter((m) => m.id in (company.module_access ?? {}))
+                          .map((m) => {
+                            const subIds = company.module_access![m.id] ?? []
+                            const subNames = m.submodules.filter((s) => subIds.includes(s.id)).map((s) => s.name)
+                            const label = m.submodules.length === 0
+                              ? m.name
+                              : `${m.name}: ${subNames.length ? subNames.join(', ') : '—'}`
+                            return (
+                              <li key={m.id} className="text-sm text-gray-900">
+                                <span className="font-medium">{m.name}</span>
+                                {m.submodules.length > 0 && (
+                                  <span className="text-gray-600"> — {subNames.length ? subNames.join(', ') : 'No submodules selected'}</span>
+                                )}
+                              </li>
+                            )
+                          })}
+                      </ul>
+                    )
+                  )}
+                </div>
+              )}
+            </div>
 
             {/* Update Features */}
             {company.subscription && (

@@ -3,8 +3,9 @@
  * Mimics Minitab Statistical Software interface
  */
 
-import { Outlet, Link, useParams } from 'react-router-dom'
+import { Outlet, Link, useParams, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
+import { companiesAPI } from '../api/companies'
 import CompanySuspendedScreen from './CompanySuspendedScreen'
 import toast from 'react-hot-toast'
 import { useState, useEffect, useRef } from 'react'
@@ -446,9 +447,29 @@ const STAT_MENU_ITEMS = [
 ]
 
 const MinitabLayout = () => {
-  const { user } = useAuthStore()
+  const { user, hasPermission, companyDetail, setCompanyDetail } = useAuthStore()
+  const navigate = useNavigate()
   const { id: spreadsheetId } = useParams<{ id?: string }>()
   const { openModal } = useModal()
+
+  // Fetch company module_access so we can hide menus/tabs by submodule
+  useEffect(() => {
+    if (!user?.company?.id) return
+    companiesAPI.getMyCompany()
+      .then((company) => setCompanyDetail({
+        id: company.id,
+        name: company.name,
+        module_access: company.module_access,
+        effective_module_access: company.effective_module_access,
+      }))
+      .catch(() => setCompanyDetail(null))
+  }, [user?.company?.id, setCompanyDetail])
+
+  // Allowed submodules for Statistical Software: use effective (per-user) or company access
+  const effectiveAccess = companyDetail?.effective_module_access ?? companyDetail?.module_access
+  const statSoftwareSubs = effectiveAccess?.statistical_software
+  const showAllSubs = !user?.company || statSoftwareSubs === undefined || statSoftwareSubs.length === 0
+  const hasSub = (id: string) => showAllSubs || (statSoftwareSubs?.includes(id) ?? false)
   const [cells, setCells] = useState<Cell[]>([])
   const [spreadsheet, setSpreadsheet] = useState<Spreadsheet | null>(null)
   const [showNavigator, setShowNavigator] = useState(true)
@@ -711,6 +732,29 @@ const MinitabLayout = () => {
     return <CompanySuspendedScreen />
   }
 
+  if (!hasPermission('access_statistical_software')) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 p-6">
+        <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-8 max-w-md text-center">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-amber-100 flex items-center justify-center">
+            <svg className="w-8 h-8 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+          </div>
+          <h1 className="text-xl font-semibold text-gray-900 mb-2">Access restricted</h1>
+          <p className="text-gray-600 mb-6">You do not have permission to access Excel® Statistical Software. Contact your administrator to request access.</p>
+          <button
+            type="button"
+            onClick={() => navigate('/dashboard')}
+            className="w-full px-4 py-2 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          >
+            Go to Dashboard
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="minitab-layout h-screen bg-white flex flex-col overflow-hidden">
       {/* Top Header Bar */}
@@ -894,7 +938,8 @@ const MinitabLayout = () => {
               )}
             </div>
 
-            {/* Data Menu */}
+            {/* Data Menu - only if company has 'data' submodule */}
+            {hasSub('data') && (
             <div className="relative" ref={dataMenuRef}>
               <button
                 onClick={() => {
@@ -1074,10 +1119,14 @@ const MinitabLayout = () => {
                 </div>
               )}
             </div>
+            )}
 
+            {hasSub('calc') && (
             <button className="px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100 rounded">Calc</button>
+            )}
 
-            {/* Stat Menu */}
+            {/* Stat Menu - only if company has 'stat' submodule */}
+            {hasSub('stat') && (
             <div className="relative">
               <button
                 onClick={() => {
@@ -1192,8 +1241,10 @@ const MinitabLayout = () => {
                 </div>
               )}
             </div>
+            )}
 
-            {/* Graph Menu */}
+            {/* Graph Menu - only if company has 'graph' submodule */}
+            {hasSub('graph') && (
             <div className="relative" ref={graphMenuRef}>
               <button
                 onClick={() => {
@@ -1468,9 +1519,14 @@ const MinitabLayout = () => {
                 </div>
               )}
             </div>
+            )}
 
+            {hasSub('view') && (
             <button className="px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100 rounded">View</button>
+            )}
+            {showAllSubs && (
             <button className="px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100 rounded">Predictive Analytics Module</button>
+            )}
             <button className="px-2 py-1.5 text-gray-400">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />

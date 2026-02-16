@@ -40,6 +40,10 @@ export interface Company {
     max_storage_mb?: number | null
   }
   settings?: Record<string, any>
+  /** Per-module access: module_id -> list of allowed submodule ids (company-wide) */
+  module_access?: Record<string, string[]>
+  /** For current user: effective access (company ∩ user restriction). Use this for UI filtering. */
+  effective_module_access?: Record<string, string[]>
   created_at: string
   updated_at: string
 }
@@ -59,6 +63,8 @@ export interface CreateCompanyData {
   // Subscription configuration: either duration (in months) or custom end date (YYYY-MM-DD)
   subscription_duration_months?: number
   subscription_end_date?: string
+  /** Module access: { module_id: [submodule_id, ...], ... } */
+  module_access?: Record<string, string[]>
 }
 
 export interface UpdateCompanyData {
@@ -70,6 +76,7 @@ export interface UpdateCompanyData {
   status?: 'active' | 'inactive' | 'suspended' | 'pending'
   is_active?: boolean
   settings?: Record<string, any>
+  module_access?: Record<string, string[]>
 }
 
 export interface AssignSubscriptionData {
@@ -177,4 +184,22 @@ export const companiesAPI = {
     const response = await api.get<Company>('/companies/my-company/')
     return response.data
   },
+
+  // Get product modules and submodules for company create/edit (Super Admin)
+  getProductModules: async () => {
+    const response = await api.get<ProductModule[]>('/companies/product-modules/')
+    return response.data
+  },
+}
+
+export interface ProductSubmodule {
+  id: string
+  name: string
+}
+
+export interface ProductModule {
+  id: string
+  name: string
+  description?: string
+  submodules: ProductSubmodule[]
 }

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { usersAPI, User, CreateUserData } from '../api/users'
-import { companiesAPI, CompanyStats } from '../api/companies'
+import { companiesAPI, CompanyStats, Company, ProductModule } from '../api/companies'
 import { rbacAPI, Role } from '../api/rbac'
 import { useAuthStore } from '../store/authStore'
 import { authAPI } from '../api/auth'
@@ -14,6 +14,8 @@ export default function CompanyAdminDashboard() {
   const [users, setUsers] = useState<User[]>([])
   const [roles, setRoles] = useState<Role[]>([])
   const [stats, setStats] = useState<CompanyStats | null>(null)
+  const [company, setCompany] = useState<Company | null>(null)
+  const [productModules, setProductModules] = useState<ProductModule[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
@@ -29,15 +31,19 @@ export default function CompanyAdminDashboard() {
       setLoading(true)
       setError(null)
 
-      const [usersRes, rolesRes, statsRes] = await Promise.all([
+      const [usersRes, rolesRes, statsRes, companyRes, modulesRes] = await Promise.all([
         usersAPI.listCompanyUsers({ ordering: '-date_joined' }),
         rbacAPI.getRoles().then(roles => ({ results: roles.filter(r => r.scope === 'company') })),
         user?.company ? companiesAPI.getCompanyStats(user.company.id) : Promise.resolve(null),
+        user?.company ? companiesAPI.getMyCompany().catch(() => null) : Promise.resolve(null),
+        companiesAPI.getProductModules().catch(() => []),
       ])
 
       setUsers(usersRes.results)
       setRoles(rolesRes.results)
       setStats(statsRes)
+      setCompany(companyRes ?? null)
+      setProductModules(Array.isArray(modulesRes) ? modulesRes : [])
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Failed to load data')
     } finally {
@@ -248,6 +254,39 @@ export default function CompanyAdminDashboard() {
           </div>
         )}
 
+        {/* Product modules – company access (read-only) */}
+        <div className="mb-8 bg-white rounded-lg shadow p-6">
+          <h2 className="text-lg font-bold text-gray-900 mb-2">Product modules</h2>
+          <p className="text-sm text-gray-600 mb-4">
+            Modules and submodules your company has access to. Assigned by your administrator.
+          </p>
+          {!company?.module_access || Object.keys(company.module_access).length === 0 ? (
+            <p className="text-sm text-gray-500">No modules assigned yet. Contact your administrator.</p>
+          ) : productModules.length === 0 ? (
+            <p className="text-sm text-gray-500">Loading...</p>
+          ) : (
+            <ul className="space-y-2">
+              {productModules
+                .filter((m) => m.id in (company.module_access ?? {}))
+                .map((m) => {
+                  const subIds = company.module_access![m.id] ?? []
+                  const subNames = m.submodules.filter((s) => subIds.includes(s.id)).map((s) => s.name)
+                  return (
+                    <li key={m.id} className="text-sm">
+                      <span className="font-medium text-gray-900">{m.name}</span>
+                      {m.submodules.length > 0 && (
+                        <span className="text-gray-600">
+                          {' — '}
+                          {subNames.length ? subNames.join(', ') : 'No submodules selected'}
+                        </span>
+                      )}
+                    </li>
+                  )
+                })}
+            </ul>
+          )}
+        </div>
+
         {error && (
           <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
             <p className="text-sm text-red-600">{error}</p>
@@ -388,6 +427,8 @@ export default function CompanyAdminDashboard() {
         <EditUserModal
           user={selectedUser}
           roles={roles}
+          company={company}
+          productModules={productModules}
           onClose={() => setSelectedUser(null)}
           onUpdate={loadData}
         />
@@ -553,34 +594,48 @@ function CreateUserModal({
   )
 }
 
-// Edit User Modal Component (simplified version)
+// Edit User Modal: Roles + Module Access (per-user restriction within company)
 function EditUserModal({
   user,
   roles,
+  company,
+  productModules,
   onClose,
   onUpdate,
 }: {
   user: User
   roles: Role[]
+  company: Company | null
+  productModules: ProductModule[]
   onClose: () => void
   onUpdate: () => void
 }) {
   const [selectedRoles, setSelectedRoles] = useState<string[]>(
     user.roles?.map(r => r.id) || []
   )
+  const [moduleAccessForm, setModuleAccessForm] = useState<Record<string, string[]>>(
+    () => ({ ...(user.module_access || {}) })
+  )
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const companyModuleAccess = company?.module_access ?? {}
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
       setLoading(true)
       setError(null)
-      await usersAPI.assignRoles(user.id, selectedRoles)
+      await usersAPI.updateUser(user.id, {
+        role_ids: selectedRoles,
+        module_access: moduleAccessForm,
+      })
+      toast.success('User updated successfully')
       onUpdate()
       onClose()
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Failed to update user')
+      const msg = err.response?.data?.module_access?.[0] ?? err.response?.data?.detail ?? 'Failed to update user'
+      setError(typeof msg === 'string' ? msg : 'Failed to update user')
     } finally {
       setLoading(false)
     }
@@ -594,11 +649,26 @@ function EditUserModal({
     )
   }
 
+  const toggleModuleSub = (modId: string, subId: string) => {
+    setModuleAccessForm((prev) => {
+      const list = [...(prev[modId] ?? [])]
+      const idx = list.indexOf(subId)
+      if (idx === -1) list.push(subId)
+      else list.splice(idx, 1)
+      const next = { ...prev }
+      next[modId] = list
+      return next
+    })
+  }
+  const setModuleSubs = (modId: string, subIds: string[]) => {
+    setModuleAccessForm((prev) => ({ ...prev, [modId]: subIds }))
+  }
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg max-w-lg w-full">
+      <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6 border-b border-gray-200">
-          <h2 className="text-2xl font-bold text-gray-900">Edit User Roles</h2>
+          <h2 className="text-2xl font-bold text-gray-900">Edit User — Roles &amp; Module Access</h2>
           <p className="text-sm text-gray-600 mt-1">{user.full_name || user.username}</p>
         </div>
 
@@ -611,7 +681,7 @@ function EditUserModal({
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Roles</label>
-            <div className="space-y-2 max-h-64 overflow-y-auto border border-gray-300 rounded-lg p-4">
+            <div className="space-y-2 max-h-48 overflow-y-auto border border-gray-300 rounded-lg p-4">
               {roles.map((role) => (
                 <label key={role.id} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
                   <input
@@ -629,6 +699,73 @@ function EditUserModal({
                 </label>
               ))}
             </div>
+          </div>
+
+          <div className="border-t border-gray-200 pt-4">
+            <h3 className="text-sm font-semibold text-gray-900 mb-2">Module access</h3>
+            <p className="text-xs text-gray-600 mb-3">
+              Restrict this user to a subset of the company&apos;s modules. Leave a module unchecked to give full company access for that module.
+            </p>
+            {productModules
+              .filter((m) => Object.prototype.hasOwnProperty.call(companyModuleAccess, m.id))
+              .map((mod) => {
+                const companySubs = companyModuleAccess[mod.id] ?? []
+                const selectedSubs = moduleAccessForm[mod.id] ?? []
+                const isRestricted = selectedSubs.length > 0 || (mod.submodules.length === 0 && mod.id in moduleAccessForm)
+                const giveFullForModule = () => {
+                  setModuleAccessForm((prev) => {
+                    const next = { ...prev }
+                    delete next[mod.id]
+                    return next
+                  })
+                }
+                const giveNoneForModule = () => setModuleAccessForm((prev) => ({ ...prev, [mod.id]: [] }))
+                const giveAllCompanySubs = () => setModuleSubs(mod.id, [...companySubs])
+                return (
+                  <div key={mod.id} className="mb-4 border border-gray-200 rounded-lg p-3 bg-gray-50/50">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium text-gray-900">{mod.name}</span>
+                      <div className="flex gap-2">
+                        <button type="button" onClick={giveFullForModule} className="text-xs text-blue-600 hover:underline">
+                          Full (company)
+                        </button>
+                        {mod.submodules.length > 0 && (
+                          <>
+                            <button type="button" onClick={giveAllCompanySubs} className="text-xs text-gray-600 hover:underline">
+                              All
+                            </button>
+                            <button type="button" onClick={giveNoneForModule} className="text-xs text-gray-500 hover:underline">
+                              None
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    {mod.submodules.length === 0 ? (
+                      <p className="text-xs text-gray-500">No submodules; access is per-module.</p>
+                    ) : (
+                      <div className="flex flex-wrap gap-x-4 gap-y-1">
+                        {mod.submodules
+                          .filter((s) => companySubs.includes(s.id))
+                          .map((sub) => (
+                            <label key={sub.id} className="flex items-center gap-1.5 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={selectedSubs.includes(sub.id)}
+                                onChange={() => toggleModuleSub(mod.id, sub.id)}
+                                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                              />
+                              <span className="text-sm text-gray-700">{sub.name}</span>
+                            </label>
+                          ))}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            {productModules.filter((m) => Object.prototype.hasOwnProperty.call(companyModuleAccess, m.id)).length === 0 && (
+              <p className="text-sm text-gray-500">Company has no modules assigned.</p>
+            )}
           </div>
 
           <div className="flex items-center justify-end gap-4 pt-4 border-t border-gray-200">

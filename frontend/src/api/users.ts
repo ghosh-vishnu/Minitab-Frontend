@@ -20,6 +20,8 @@ export interface User {
     description?: string
     scope: string
   }>
+  /** Per-user module/submodule restriction. Empty = full company access. */
+  module_access?: Record<string, string[]>
   created_at: string
   last_login?: string
 }
@@ -39,6 +41,7 @@ export interface UpdateUserData {
   email?: string
   is_active?: boolean
   role_ids?: string[]
+  module_access?: Record<string, string[]>
 }
 
 export const usersAPI = {

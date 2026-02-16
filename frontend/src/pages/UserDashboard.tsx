@@ -97,7 +97,7 @@ export default function UserDashboard() {
         <div className="mb-8">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {hasPermission('add_spreadsheet') && (
+            {hasPermission('create_spreadsheet') && (
               <Link
                 to="/spreadsheets/new"
                 className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow border-l-4 border-blue-600"
@@ -262,7 +262,7 @@ export default function UserDashboard() {
             <p className="text-gray-600 mb-6">
               You don't have any spreadsheets yet. Create one to get started!
             </p>
-            {hasPermission('add_spreadsheet') && (
+            {hasPermission('create_spreadsheet') && (
               <Link
                 to="/spreadsheets/new"
                 className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition-colors"

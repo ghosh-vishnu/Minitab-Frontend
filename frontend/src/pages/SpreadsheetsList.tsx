@@ -76,7 +76,7 @@ export default function SpreadsheetsList() {
                 {user?.company?.name || 'Manage your data'}
               </p>
             </div>
-            {hasPermission('add_spreadsheet') && (
+            {hasPermission('create_spreadsheet') && (
               <button
                 onClick={handleCreateNew}
                 className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition-colors"
@@ -129,7 +129,7 @@ export default function SpreadsheetsList() {
                 ? 'Try a different search term' 
                 : 'Create your first spreadsheet to start analyzing data'}
             </p>
-            {hasPermission('add_spreadsheet') && !searchTerm && (
+            {hasPermission('create_spreadsheet') && !searchTerm && (
               <button
                 onClick={handleCreateNew}
                 className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-8 rounded-lg transition-colors"

@@ -1,13 +1,23 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { spreadsheetsAPI, Spreadsheet } from '../api/spreadsheets'
+import { companiesAPI } from '../api/companies'
 import ExcelImportDialog from '../components/ExcelImportDialog'
 import CompanySuspendedScreen from '../components/CompanySuspendedScreen'
 import toast from 'react-hot-toast'
 import { useAuthStore } from '../store/authStore'
 
+/** Module ids matching backend PRODUCT_MODULES (for filtering by company.module_access) */
+const DASHBOARD_MODULES = [
+  { id: 'statistical_software', name: 'Excel® Statistical Software', desc: 'Analytics' },
+  { id: 'brainstorm', name: 'Excel Brainstorm', desc: 'Brainstorm' },
+  { id: 'data_center', name: 'Excel Data Center', desc: 'Data Prep' },
+  { id: 'dashboards', name: 'Excel Dashboards', desc: 'Dashboard' },
+  { id: 'workspace', name: 'Excel Workspace®', desc: 'Quality Project' },
+] as const
+
 const Dashboard = () => {
-  const { user } = useAuthStore()
+  const { user, hasPermission, companyDetail, setCompanyDetail } = useAuthStore()
 
   if (user?.company?.status === 'suspended') {
     return <CompanySuspendedScreen />
@@ -25,6 +35,19 @@ const Dashboard = () => {
     loadAllData()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // Fetch company detail (module_access) for company users so we only show allowed modules
+  useEffect(() => {
+    if (!user?.company?.id) return
+    companiesAPI.getMyCompany()
+      .then((company) => setCompanyDetail({
+        id: company.id,
+        name: company.name,
+        module_access: company.module_access,
+        effective_module_access: company.effective_module_access,
+      }))
+      .catch(() => setCompanyDetail(null))
+  }, [user?.company?.id, setCompanyDetail])
 
   const loadAllData = async () => {
     try {
@@ -248,93 +271,68 @@ const Dashboard = () => {
         <div className="mb-12">
           <h2 className="text-2xl font-semibold text-gray-900 mb-6">New</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-            {/* Analytics - Excel Statistical Software */}
-            <button
-              onClick={async () => {
-                // Create a new spreadsheet and open it
-                try {
-                  const spreadsheet = await spreadsheetsAPI.create({
-                    name: 'Untitled',
-                    row_count: 100,
-                    column_count: 26,
-                  })
-                  
-                  // Validate response has id
-                  if (!spreadsheet) {
-                    toast.error('Failed to create spreadsheet: No response')
-                    return
-                  }
-                  
-                  if (!spreadsheet.id) {
-                    toast.error('Failed to create spreadsheet: Missing ID in response')
-                    console.error('Spreadsheet creation response:', spreadsheet)
-                    return
-                  }
-                  
-                  // Navigate to the new spreadsheet
-                  navigate(`/minitab/spreadsheet/${spreadsheet.id}`)
-                } catch (error: any) {
-                  console.error('Error creating spreadsheet:', error)
-                  const errorMessage = error.response?.data?.error || 
-                                      error.response?.data?.message || 
-                                      'Failed to create spreadsheet'
-                  toast.error(errorMessage)
-                }
-              }}
-              className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow text-left group"
-            >
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4 group-hover:bg-blue-200 transition-colors">
-                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-              </div>
-              <h3 className="font-semibold text-gray-900 mb-1">Excel® Statistical Software</h3>
-              <p className="text-sm text-gray-600">Analytics</p>
-            </button>
-
-            {/* Brainstorm */}
-            <div className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow cursor-pointer">
-              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                </svg>
-              </div>
-              <h3 className="font-semibold text-gray-900 mb-1">Excel Brainstorm</h3>
-              <p className="text-sm text-gray-600">Brainstorm</p>
-            </div>
-
-            {/* Data Prep */}
-            <div className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow cursor-pointer">
-              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-              </div>
-              <h3 className="font-semibold text-gray-900 mb-1">Excel Data Center</h3>
-              <p className="text-sm text-gray-600">Data Prep</p>
-            </div>
-
-            {/* Dashboard */}
-            <div className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow cursor-pointer">
-              <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-3zM14 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1h-4a1 1 0 01-1-1v-3z" />
-                </svg>
-              </div>
-              <h3 className="font-semibold text-gray-900 mb-1">Excel Dashboards</h3>
-              <p className="text-sm text-gray-600">Dashboard</p>
-            </div>
-
-            {/* Quality Project */}
-            <div className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow cursor-pointer">
-              <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                </svg>
-              </div>
-              <h3 className="font-semibold text-gray-900 mb-1">Excel Workspace®</h3>
-              <p className="text-sm text-gray-600">Quality Project</p>
-            </div>
+            {DASHBOARD_MODULES.filter((mod) => {
+              // No company = show all; otherwise use effective (per-user) or company module access
+              if (!user?.company) return true
+              const access = companyDetail?.effective_module_access ?? companyDetail?.module_access
+              if (!access) return true // still loading or no restriction
+              return Object.prototype.hasOwnProperty.call(access, mod.id)
+            }).map((mod) => {
+              const isStatistical = mod.id === 'statistical_software'
+              if (isStatistical) {
+                if (!hasPermission('access_statistical_software')) return null
+                return (
+                  <button
+                    key={mod.id}
+                    onClick={async () => {
+                      try {
+                        const spreadsheet = await spreadsheetsAPI.create({
+                          name: 'Untitled',
+                          row_count: 100,
+                          column_count: 26,
+                        })
+                        if (!spreadsheet?.id) {
+                          toast.error('Failed to create spreadsheet: Missing ID in response')
+                          return
+                        }
+                        navigate(`/minitab/spreadsheet/${spreadsheet.id}`)
+                      } catch (error: any) {
+                        const err = error.response?.data?.error || error.response?.data?.message || 'Failed to create spreadsheet'
+                        toast.error(err)
+                      }
+                    }}
+                    className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow text-left group"
+                  >
+                    <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4 group-hover:bg-blue-200 transition-colors">
+                      <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                      </svg>
+                    </div>
+                    <h3 className="font-semibold text-gray-900 mb-1">{mod.name}</h3>
+                    <p className="text-sm text-gray-600">{mod.desc}</p>
+                  </button>
+                )
+              }
+              return (
+                <div key={mod.id} className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow cursor-pointer">
+                  <div className={`w-12 h-12 rounded-lg flex items-center justify-center mb-4 ${
+                    mod.id === 'brainstorm' ? 'bg-purple-100' :
+                    mod.id === 'data_center' ? 'bg-green-100' :
+                    mod.id === 'dashboards' ? 'bg-orange-100' : 'bg-yellow-100'
+                  }`}>
+                    <svg className={`w-6 h-6 ${
+                      mod.id === 'brainstorm' ? 'text-purple-600' :
+                      mod.id === 'data_center' ? 'text-green-600' :
+                      mod.id === 'dashboards' ? 'text-orange-600' : 'text-yellow-600'
+                    }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                    </svg>
+                  </div>
+                  <h3 className="font-semibold text-gray-900 mb-1">{mod.name}</h3>
+                  <p className="text-sm text-gray-600">{mod.desc}</p>
+                </div>
+              )
+            })}
           </div>
         </div>
 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { companiesAPI, Company, CreateCompanyData } from '../api/companies'
+import { companiesAPI, Company, CreateCompanyData, ProductModule } from '../api/companies'
 import { plansAPI } from '../api/subscriptions'
 import type { SubscriptionPlan } from '../types/subscription'
 import { useAuthStore } from '../store/authStore'
@@ -413,10 +413,25 @@ function CreateCompanyModal({
     admin_first_name: '',
     admin_last_name: '',
     subscription_duration_months: 12,
+    module_access: {},
   })
   const [durationOption, setDurationOption] = useState<'6' | '12' | '24' | '36' | 'custom'>('12')
+  const [productModules, setProductModules] = useState<ProductModule[]>([])
+  const [modulesLoading, setModulesLoading] = useState(true)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    companiesAPI.getProductModules().then((data) => {
+      if (!cancelled) setProductModules(data)
+    }).catch(() => {
+      if (!cancelled) setProductModules([])
+    }).finally(() => {
+      if (!cancelled) setModulesLoading(false)
+    })
+    return () => { cancelled = true }
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -431,6 +446,7 @@ function CreateCompanyModal({
       }
 
       const payload: CreateCompanyData = { ...formData }
+      payload.module_access = formData.module_access || {}
 
       // Ensure we only send the relevant subscription field
       if (durationOption === 'custom') {
@@ -578,6 +594,105 @@ function CreateCompanyModal({
                 </div>
               )}
             </div>
+          </div>
+
+          {/* Module Access */}
+          <div className="space-y-4 pt-4 border-t border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-900">Module Access</h3>
+            <p className="text-sm text-gray-600">
+              Select which product modules and submodules this company can access.
+            </p>
+            {modulesLoading ? (
+              <div className="flex items-center gap-2 text-gray-500">
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-gray-300 border-t-blue-600" />
+                Loading modules...
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {productModules.map((mod) => {
+                  const selectedSubs = formData.module_access?.[mod.id] ?? []
+                  const isModuleChecked = selectedSubs.length > 0 || (mod.submodules.length === 0 && (formData.module_access && mod.id in formData.module_access))
+                  const toggleModule = () => {
+                    const next: Record<string, string[]> = { ...(formData.module_access || {}) }
+                    if (isModuleChecked) {
+                      delete next[mod.id]
+                    } else {
+                      next[mod.id] = mod.submodules.length === 0 ? [] : mod.submodules.map((s) => s.id)
+                    }
+                    setFormData({ ...formData, module_access: next })
+                  }
+                  const toggleSub = (subId: string) => {
+                    const next: Record<string, string[]> = { ...(formData.module_access || {}) }
+                    const list = [...(next[mod.id] ?? [])]
+                    const idx = list.indexOf(subId)
+                    if (idx === -1) list.push(subId)
+                    else list.splice(idx, 1)
+                    next[mod.id] = list
+                    setFormData({ ...formData, module_access: next })
+                  }
+                  const selectAllSubs = () => {
+                    const next: Record<string, string[]> = { ...(formData.module_access || {}) }
+                    next[mod.id] = mod.submodules.map((s) => s.id)
+                    setFormData({ ...formData, module_access: next })
+                  }
+                  const clearSubs = () => {
+                    const next: Record<string, string[]> = { ...(formData.module_access || {}) }
+                    next[mod.id] = []
+                    setFormData({ ...formData, module_access: next })
+                  }
+                  return (
+                    <div key={mod.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50/50">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={isModuleChecked}
+                          onChange={toggleModule}
+                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        <span className="font-medium text-gray-900">{mod.name}</span>
+                        {mod.description && (
+                          <span className="text-sm text-gray-500">— {mod.description}</span>
+                        )}
+                      </label>
+                      {mod.submodules.length > 0 && (
+                        <div className="ml-6 mt-3 space-y-2">
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={selectAllSubs}
+                              className="text-xs text-blue-600 hover:text-blue-800"
+                            >
+                              Select all
+                            </button>
+                            <span className="text-gray-400">|</span>
+                            <button
+                              type="button"
+                              onClick={clearSubs}
+                              className="text-xs text-gray-500 hover:text-gray-700"
+                            >
+                              Clear
+                            </button>
+                          </div>
+                          <div className="flex flex-wrap gap-x-4 gap-y-1">
+                            {mod.submodules.map((sub) => (
+                              <label key={sub.id} className="flex items-center gap-1.5 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={selectedSubs.includes(sub.id)}
+                                  onChange={() => toggleSub(sub.id)}
+                                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                />
+                                <span className="text-sm text-gray-700">{sub.name}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
           </div>
 
           <div className="space-y-4 pt-4 border-t border-gray-200">
