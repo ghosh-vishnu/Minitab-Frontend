@@ -1,4 +1,6 @@
-# Minitab API - Complete Postman Testing Guide
+# Minitab API - Postman Testing Guide
+
+This guide covers only the APIs included in the current Postman collection (used by the frontend).
 
 ## Table of Contents
 1. [Setup Instructions](#setup-instructions)
@@ -6,11 +8,10 @@
 3. [Authentication APIs](#authentication-apis)
 4. [Spreadsheet APIs](#spreadsheet-apis)
 5. [Analysis APIs](#analysis-apis)
-6. [Charts APIs](#charts-apis)
-7. [RBAC APIs](#rbac-apis)
-8. [Companies APIs](#companies-apis)
-9. [Subscriptions APIs](#subscriptions-apis)
-10. [Health Check APIs](#health-check-apis)
+6. [RBAC APIs](#rbac-apis)
+7. [Companies APIs](#companies-apis)
+8. [Subscriptions APIs](#subscriptions-apis)
+9. [Health Check APIs](#health-check-apis)
 
 ---
 
@@ -20,7 +21,7 @@
 1. Open Postman
 2. Click on **Import** button (top left)
 3. Select **File** tab
-4. Choose `Minitab_API.postman_collection.json` from the backend folder
+4. Choose `Minitab_API.postman_collection.json` from the **Minitab_Frontend** folder
 5. Click **Import**
 
 ### Step 2: Create Environment
@@ -39,7 +40,6 @@
 | USER_ID | (leave empty) | (leave empty) |
 | ROLE_ID | (leave empty) | (leave empty) |
 | ANALYSIS_ID | (leave empty) | (leave empty) |
-| CHART_ID | (leave empty) | (leave empty) |
 | USER_ROLE_ID | (leave empty) | (leave empty) |
 | COMPANY_ID | (leave empty) | (leave empty) |
 | SUBSCRIPTION_ID | (leave empty) | (leave empty) |
@@ -290,140 +290,6 @@ Authorization: Bearer {{ACCESS_TOKEN}}
 ```
 
 **Use Case:** When access token expires (after 60 minutes), use this to get a new one
-
----
-
-### 6. List Child Users
-
-**Endpoint:** `GET /api/auth/child-users/`
-
-**Description:** List all child users created by the current super user
-
-**Authentication:** Bearer Token required (SUPER user only)
-
-**Headers:**
-```
-Authorization: Bearer {{ACCESS_TOKEN}}
-```
-
-**Testing Steps:**
-1. Login as a SUPER user
-2. Open "Authentication" → "List Child Users"
-3. Click **Send**
-4. Verify response status: `200 OK`
-
-**Expected Response:**
-```json
-[
-    {
-        "id": "uuid-here",
-        "username": "childuser1",
-        "email": "child1@example.com",
-        "full_name": "Child User One",
-        "user_type": "CHILD",
-        "is_active": true,
-        "created_at": "2026-02-07T11:00:00Z"
-    }
-]
-```
-
-**Error Responses:**
-- `403 Forbidden`: Only SUPER users can access
-  ```json
-  {
-      "detail": "Only super users can manage child users"
-  }
-  ```
-
----
-
-### 7. Create Child User
-
-**Endpoint:** `POST /api/auth/child-users/`
-
-**Description:** Create a child user account (sub-account)
-
-**Authentication:** Bearer Token required (SUPER user only)
-
-**Request Body:**
-```json
-{
-    "username": "childuser1",
-    "email": "child1@example.com",
-    "password": "ChildPass123!",
-    "password_confirm": "ChildPass123!",
-    "full_name": "Child User One",
-    "is_active": true
-}
-```
-
-**Testing Steps:**
-1. Login as a SUPER user
-2. Open "Authentication" → "Create Child User"
-3. Modify user details as needed
-4. Click **Send**
-5. Verify response status: `201 Created`
-
-**Expected Response:**
-```json
-{
-    "id": "uuid-here",
-    "username": "childuser1",
-    "email": "child1@example.com",
-    "full_name": "Child User One",
-    "user_type": "CHILD",
-    "is_active": true,
-    "created_by": "parent-user-id",
-    "created_at": "2026-02-07T11:00:00Z"
-}
-```
-
-**Notes:**
-- Child users are created with user_type = "CHILD"
-- Child users can only access their own data
-- SUPER users can manage all child users they created
-
----
-
-### 8. Toggle User Status
-
-**Endpoint:** `PATCH /api/auth/users/{id}/toggle/`
-
-**Description:** Enable or disable a user account
-
-**Authentication:** Bearer Token required (SUPER user only)
-
-**URL Parameters:**
-- `id`: User ID to toggle (use {{USER_ID}} variable)
-
-**Request Body:**
-```json
-{
-    "is_active": false
-}
-```
-
-**Testing Steps:**
-1. First, get a user ID (from List Child Users or create a child user)
-2. Save the user ID to {{USER_ID}} environment variable
-3. Open "Authentication" → "Toggle User Status"
-4. Set is_active to true or false
-5. Click **Send**
-6. Verify response status: `200 OK`
-
-**Expected Response:**
-```json
-{
-    "id": "uuid-here",
-    "username": "childuser1",
-    "email": "child1@example.com",
-    "full_name": "Child User One",
-    "is_active": false,
-    "created_at": "2026-02-07T11:00:00Z"
-}
-```
-
-**Use Case:** Temporarily disable/enable user accounts without deleting them
 
 ---
 
@@ -971,7 +837,7 @@ Authorization: Bearer {{ACCESS_TOKEN}}
 
 ### 22. Bulk Update Cells
 
-**Endpoint:** `POST /api/spreadsheets/{id}/bulk_update/`
+**Endpoint:** `POST /api/spreadsheets/{id}/update_cells/`
 
 **Description:** Update multiple cells in one request (more efficient)
 
@@ -1048,35 +914,6 @@ Authorization: Bearer {{ACCESS_TOKEN}}
 - Much faster than calling update_cell multiple times
 - Can handle hundreds of cells in one request
 - Uses database bulk operations
-
----
-
-### 23. Clear Cells
-
-**Endpoint:** `DELETE /api/spreadsheets/{id}/clear_cells/`
-
-**Description:** Clear all cells in a spreadsheet or worksheet
-
-**Authentication:** Bearer Token required
-
-**URL Parameters:**
-- `id`: Spreadsheet ID (use {{SPREADSHEET_ID}})
-
-**Query Parameters (Optional):**
-- `?worksheet_id=uuid` - Clear only specific worksheet
-
-**Testing Steps:**
-1. Open "Spreadsheets" → "Clear Cells"
-2. Click **Send** to clear all cells
-3. OR add `?worksheet_id={{WORKSHEET_ID}}` to clear specific sheet
-4. Verify response status: `204 No Content`
-
-**Expected Response:** Empty
-
-**Notes:**
-- Permanently deletes cell data (cannot be undone)
-- Worksheet structure remains intact
-- Use with caution!
 
 ---
 
@@ -1328,247 +1165,6 @@ Authorization: Bearer {{ACCESS_TOKEN}}
 5. Verify response status: `200 OK`
 
 **Expected Response:** Same as perform_analysis response
-
----
-
-### 29. Delete Analysis
-
-**Endpoint:** `DELETE /api/analysis/{id}/`
-
-**Description:** Delete an analysis record
-
-**Authentication:** Bearer Token required
-
-**URL Parameters:**
-- `id`: Analysis ID (use {{ANALYSIS_ID}})
-
-**Testing Steps:**
-1. Open "Analysis" → "Delete Analysis"
-2. Ensure {{ANALYSIS_ID}} is set
-3. Click **Send**
-4. Verify response status: `204 No Content`
-
-**Expected Response:** Empty
-
----
-
-## Charts APIs
-
-### 30. List Charts
-
-**Endpoint:** `GET /api/charts/`
-
-**Description:** List all charts created by the user
-
-**Authentication:** Bearer Token required
-
-**Testing Steps:**
-1. Open "Charts" → "List Charts"
-2. Click **Send**
-3. Verify response status: `200 OK`
-
-**Expected Response:**
-```json
-[
-    {
-        "id": "chart-uuid",
-        "spreadsheet": {
-            "id": "spreadsheet-uuid",
-            "name": "My Spreadsheet"
-        },
-        "name": "Sales Chart",
-        "chart_type": "bar",
-        "data_range": {
-            "start_row": 0,
-            "end_row": 10,
-            "start_col": 0,
-            "end_col": 2
-        },
-        "chart_config": {
-            "title": "Monthly Sales",
-            "x_axis": "Month",
-            "y_axis": "Revenue"
-        },
-        "created_at": "2026-02-07T15:00:00Z"
-    }
-]
-```
-
----
-
-### 31. Create Chart
-
-**Endpoint:** `POST /api/charts/`
-
-**Description:** Create a new chart from spreadsheet data
-
-**Authentication:** Bearer Token required
-
-**Request Body (Bar Chart):**
-```json
-{
-    "spreadsheet": "{{SPREADSHEET_ID}}",
-    "name": "Sales Chart",
-    "chart_type": "bar",
-    "data_range": {
-        "start_row": 0,
-        "end_row": 10,
-        "start_col": 0,
-        "end_col": 2
-    },
-    "chart_config": {
-        "title": "Monthly Sales",
-        "x_axis": "Month",
-        "y_axis": "Revenue",
-        "colors": ["#FF6384", "#36A2EB"],
-        "legend": true
-    }
-}
-```
-
-**Chart Types:**
-- `bar` - Bar chart
-- `line` - Line chart
-- `pie` - Pie chart
-- `scatter` - Scatter plot
-- `histogram` - Histogram
-
-**Testing Steps:**
-1. Create spreadsheet with data
-2. Open "Charts" → "Create Chart"
-3. Set spreadsheet ID and data range
-4. Configure chart properties
-5. Click **Send**
-6. Verify response status: `201 Created`
-
-**Expected Response:**
-```json
-{
-    "id": "chart-uuid",
-    "spreadsheet": "spreadsheet-uuid",
-    "name": "Sales Chart",
-    "chart_type": "bar",
-    "data_range": {
-        "start_row": 0,
-        "end_row": 10,
-        "start_col": 0,
-        "end_col": 2
-    },
-    "chart_config": {
-        "title": "Monthly Sales",
-        "x_axis": "Month",
-        "y_axis": "Revenue",
-        "colors": ["#FF6384", "#36A2EB"],
-        "legend": true
-    },
-    "created_at": "2026-02-07T15:00:00Z"
-}
-```
-
-**chart_config Options:**
-```json
-{
-    "title": "Chart Title",
-    "x_axis": "X Axis Label",
-    "y_axis": "Y Axis Label",
-    "colors": ["#color1", "#color2"],
-    "legend": true,
-    "stacked": false,
-    "show_values": true,
-    "grid": true
-}
-```
-
----
-
-### 32. Get Chart Details
-
-**Endpoint:** `GET /api/charts/{id}/`
-
-**Description:** Get details of a specific chart
-
-**Authentication:** Bearer Token required
-
-**URL Parameters:**
-- `id`: Chart ID (use {{CHART_ID}})
-
-**Testing Steps:**
-1. Open "Charts" → "Get Chart Details"
-2. Ensure {{CHART_ID}} is set
-3. Click **Send**
-4. Verify response status: `200 OK`
-
-**Expected Response:** Same as create chart response
-
----
-
-### 33. Update Chart
-
-**Endpoint:** `PUT /api/charts/{id}/`
-
-**Description:** Update chart configuration
-
-**Authentication:** Bearer Token required
-
-**URL Parameters:**
-- `id`: Chart ID (use {{CHART_ID}})
-
-**Request Body:**
-```json
-{
-    "name": "Updated Chart Name",
-    "chart_type": "line",
-    "chart_config": {
-        "title": "Updated Title",
-        "colors": ["#00FF00", "#0000FF"]
-    }
-}
-```
-
-**Testing Steps:**
-1. Open "Charts" → "Update Chart"
-2. Modify fields as needed
-3. Click **Send**
-4. Verify response status: `200 OK`
-
-**Expected Response:**
-```json
-{
-    "id": "chart-uuid",
-    "name": "Updated Chart Name",
-    "chart_type": "line",
-    "chart_config": {
-        "title": "Updated Title",
-        "colors": ["#00FF00", "#0000FF"]
-    },
-    "updated_at": "2026-02-07T15:30:00Z"
-}
-```
-
-**Notes:**
-- Can partially update (send only changed fields)
-- data_range and chart_config are merged with existing values
-
----
-
-### 34. Delete Chart
-
-**Endpoint:** `DELETE /api/charts/{id}/`
-
-**Description:** Delete a chart
-
-**Authentication:** Bearer Token required
-
-**URL Parameters:**
-- `id`: Chart ID (use {{CHART_ID}})
-
-**Testing Steps:**
-1. Open "Charts" → "Delete Chart"
-2. Ensure {{CHART_ID}} is set
-3. Click **Send**
-4. Verify response status: `204 No Content`
-
-**Expected Response:** Empty
 
 ---
 
@@ -2473,53 +2069,6 @@ Authorization: Bearer {{ACCESS_TOKEN}}
 
 ---
 
-### 53. Get Active Subscription
-
-**Endpoint:** `GET /api/subscriptions/active/`
-
-**Description:** Get the active subscription for the current user's company
-
-**Authentication:** Required (Bearer Token)
-
-**Testing Steps:**
-1. Ensure you're logged in
-2. Open "Subscriptions" → "Get Active Subscription"
-3. Click **Send**
-4. Verify response status: `200 OK`
-
-**Expected Response:**
-```json
-{
-    "id": "770e8400-e29b-41d4-a716-446655440222",
-    "company": {
-        "id": "660e8400-e29b-41d4-a716-446655440111",
-        "name": "Tech Innovators Ltd"
-    },
-    "plan": "PROFESSIONAL",
-    "status": "ACTIVE",
-    "days_remaining": 28,
-    "start_date": "2025-02-07T00:00:00Z",
-    "end_date": "2025-03-07T00:00:00Z",
-    "features": {
-        "advanced_analytics": true,
-        "custom_charts": true,
-        "api_access": true,
-        "priority_support": true
-    },
-    "usage": {
-        "users": "12/50",
-        "spreadsheets": "45/200",
-        "storage": "23.5/100 GB"
-    }
-}
-```
-
-**Error Responses:**
-- `401 Unauthorized` - Token missing or invalid
-- `404 Not Found` - No active subscription found
-
----
-
 ### 54. Update Subscription
 
 **Endpoint:** `PUT /api/subscriptions/{id}/` or `PATCH /api/subscriptions/{id}/`
@@ -2667,14 +2216,14 @@ Authorization: Bearer {{ACCESS_TOKEN}}
 **Request Body:**
 ```json
 {
-    "billing_cycle": "YEARLY"
+    "days": 365
 }
 ```
 
 **Testing Steps:**
 1. Ensure SUBSCRIPTION_ID is set in environment variables
 2. Open "Subscriptions" → "Renew Subscription"
-3. Select billing cycle
+3. Set `days` (e.g. 365 for one year)
 4. Click **Send**
 5. Verify response status: `200 OK`
 
@@ -2711,78 +2260,7 @@ Authorization: Bearer {{ACCESS_TOKEN}}
 - `403 Forbidden` - Insufficient permissions
 - `404 Not Found` - Subscription doesn't exist
 
----
-
-### 57. Check Subscription Status
-
-**Endpoint:** `GET /api/subscriptions/{id}/status/`
-
-**Description:** Quick check of subscription status and limits
-
-**Authentication:** Required (Bearer Token)
-
-**Path Parameters:**
-- `id` - Subscription UUID (use {{SUBSCRIPTION_ID}})
-
-**Testing Steps:**
-1. Ensure SUBSCRIPTION_ID is set in environment variables
-2. Open "Subscriptions" → "Check Subscription Status"
-3. Click **Send**
-4. Verify response status: `200 OK`
-
-**Expected Response:**
-```json
-{
-    "is_active": true,
-    "status": "ACTIVE",
-    "plan": "PROFESSIONAL",
-    "days_remaining": 28,
-    "limits": {
-        "users": {
-            "current": 12,
-            "max": 50,
-            "percentage": 24,
-            "available": 38
-        },
-        "spreadsheets": {
-            "current": 45,
-            "max": 200,
-            "percentage": 22.5,
-            "available": 155
-        },
-        "storage": {
-            "current_gb": 23.5,
-            "max_gb": 100,
-            "percentage": 23.5,
-            "available_gb": 76.5
-        }
-    },
-    "warnings": [],
-    "expires_at": "2025-03-07T00:00:00Z"
-}
-```
-
-**Status Indicators:**
-- `ACTIVE` - Subscription is active
-- `TRIAL` - In trial period
-- `EXPIRED` - Subscription has expired
-- `CANCELLED` - Subscription was cancelled
-
-**Warnings May Include:**
-- Approaching user limit (>80% usage)
-- Approaching storage limit (>80% usage)
-- Subscription expiring soon (<7 days)
-
-**Use Cases:**
-- Dashboard display
-- Feature access checks
-- Usage monitoring
-- Limit enforcement
-
-**Error Responses:**
-- `401 Unauthorized` - Token missing or invalid
-- `403 Forbidden` - No access to this subscription
-- `404 Not Found` - Subscription doesn't exist
+**Note:** Backend expects `days` in request body (e.g. `{"days": 365}`) for renewal duration.
 
 ---
 
@@ -3026,23 +2504,11 @@ Authorization: Bearer {{ACCESS_TOKEN}}
 4. **Create Spreadsheet** → Get SPREADSHEET_ID (auto-saved)
 5. **Create Worksheet** → Get WORKSHEET_ID (auto-saved)
 6. **Bulk Update Cells** → Add data
-7. **Summary Statistics** → Analyze data
-8. **Create Chart** → Visualize data
-9. **Get Recent Spreadsheets** → Verify creation
-10. **Logout** → Clean session
+7. **Summary Statistics** (or **Perform Analysis**) → Analyze data
+8. **Get Recent Spreadsheets** → Verify creation
+9. **Logout** → Clean session
 
-### Workflow 2: Multi-User Setup
-
-1. **Register Super User** → Login
-2. **Create Child User 1**
-3. **Create Child User 2**
-4. **List Child Users** → Verify
-5. **Login as Child User**
-6. **Create Spreadsheet** → Test isolation
-7. **Switch back to Super User**
-8. **Toggle Child User Status** → Disable/Enable
-
-### Workflow 3: RBAC Configuration
+### Workflow 2: RBAC Configuration
 
 1. **Login as Admin**
 2. **Create Role** (e.g., "Editor")
@@ -3051,14 +2517,14 @@ Authorization: Bearer {{ACCESS_TOKEN}}
 5. **List User Roles** → Verify assignment
 6. **List Activity Logs** → Check audit trail
 
-### Workflow 4: Data Analysis
+### Workflow 3: Data Analysis
 
 1. **Create Spreadsheet with Data**
 2. **Bulk Update Cells** → Add numeric data in columns
 3. **Summary Statistics** → Get descriptive stats
 4. **Correlation Analysis** → Check relationships
 5. **Linear Regression** → Build predictive model
-6. **Create Chart** → Visualize results
+6. **Get Analysis Results** → View results
 7. **List Analyses** → Review past analyses
 
 ---
@@ -3126,8 +2592,9 @@ Authorization: Bearer {{ACCESS_TOKEN}}
 | USER_ID | User to manage | Manual |
 | ROLE_ID | Role to assign | Manual |
 | ANALYSIS_ID | Analysis to view | Manual |
-| CHART_ID | Chart to update | Manual |
 | USER_ROLE_ID | Role assignment to remove | Manual |
+| COMPANY_ID | Company to manage | Create Company (auto) |
+| SUBSCRIPTION_ID | Subscription to manage | Create Subscription (auto) |
 
 ---
 

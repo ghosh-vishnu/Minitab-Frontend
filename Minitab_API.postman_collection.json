@@ -2,7 +2,7 @@
 	"info": {
 		"_postman_id": "minitab-api-collection-2026",
 		"name": "Minitab API Collection",
-		"description": "Complete API collection for Minitab Excel-like application with authentication, spreadsheets, analysis, charts, RBAC, companies, and subscriptions - 61 API endpoints",
+		"description": "Minitab API collection – only endpoints used by the frontend: auth, spreadsheets, analysis, companies, subscriptions, RBAC, health.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -66,35 +66,6 @@
 						"body": {
 							"mode": "raw",
 							"raw": "{\n    \"username\": \"testuser\",\n    \"password\": \"SecurePass123!\"\n}"
-						},
-						"url": {
-							"raw": "{{BASE_URL}}/api/auth/login/",
-							"host": [
-								"{{BASE_URL}}"
-							],
-							"path": [
-								"api",
-								"auth",
-								"login",
-								""
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Login with Email",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"email\": \"testuser@example.com\",\n    \"password\": \"SecurePass123!\"\n}"
 						},
 						"url": {
 							"raw": "{{BASE_URL}}/api/auth/login/",
@@ -212,99 +183,6 @@
 						}
 					},
 					"response": []
-				},
-				{
-					"name": "List Child Users",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{ACCESS_TOKEN}}"
-							}
-						],
-						"url": {
-							"raw": "{{BASE_URL}}/api/auth/child-users/",
-							"host": [
-								"{{BASE_URL}}"
-							],
-							"path": [
-								"api",
-								"auth",
-								"child-users",
-								""
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Create Child User",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{ACCESS_TOKEN}}"
-							},
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"username\": \"childuser1\",\n    \"email\": \"child1@example.com\",\n    \"password\": \"ChildPass123!\",\n    \"password_confirm\": \"ChildPass123!\",\n    \"full_name\": \"Child User One\",\n    \"is_active\": true\n}"
-						},
-						"url": {
-							"raw": "{{BASE_URL}}/api/auth/child-users/",
-							"host": [
-								"{{BASE_URL}}"
-							],
-							"path": [
-								"api",
-								"auth",
-								"child-users",
-								""
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Toggle User Status",
-					"request": {
-						"method": "PATCH",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{ACCESS_TOKEN}}"
-							},
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"is_active\": false\n}"
-						},
-						"url": {
-							"raw": "{{BASE_URL}}/api/auth/child-users/{{USER_ID}}/status/",
-							"host": [
-								"{{BASE_URL}}"
-							],
-							"path": [
-								"api",
-								"auth",
-								"child-users",
-								"{{USER_ID}}",
-								"status",
-								""
-							]
-						}
-					},
-					"response": []
 				}
 			]
 		},
@@ -391,6 +269,39 @@
 								"value": "Bearer {{ACCESS_TOKEN}}"
 							}
 						],
+						"url": {
+							"raw": "{{BASE_URL}}/api/spreadsheets/{{SPREADSHEET_ID}}/",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"spreadsheets",
+								"{{SPREADSHEET_ID}}",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Partial Update Spreadsheet (e.g. Toggle Favorite)",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"is_favorite\": true\n}"
+						},
 						"url": {
 							"raw": "{{BASE_URL}}/api/spreadsheets/{{SPREADSHEET_ID}}/",
 							"host": [
@@ -593,7 +504,7 @@
 							"raw": "{\n    \"cells\": [\n        {\n            \"worksheet_id\": \"{{WORKSHEET_ID}}\",\n            \"row_index\": 0,\n            \"column_index\": 0,\n            \"value\": \"Name\",\n            \"data_type\": \"text\"\n        },\n        {\n            \"worksheet_id\": \"{{WORKSHEET_ID}}\",\n            \"row_index\": 0,\n            \"column_index\": 1,\n            \"value\": \"Age\",\n            \"data_type\": \"text\"\n        },\n        {\n            \"worksheet_id\": \"{{WORKSHEET_ID}}\",\n            \"row_index\": 1,\n            \"column_index\": 0,\n            \"value\": \"John\",\n            \"data_type\": \"text\"\n        },\n        {\n            \"worksheet_id\": \"{{WORKSHEET_ID}}\",\n            \"row_index\": 1,\n            \"column_index\": 1,\n            \"value\": \"25\",\n            \"data_type\": \"number\"\n        }\n    ]\n}"
 						},
 						"url": {
-							"raw": "{{BASE_URL}}/api/spreadsheets/{{SPREADSHEET_ID}}/bulk_update/",
+							"raw": "{{BASE_URL}}/api/spreadsheets/{{SPREADSHEET_ID}}/update_cells/",
 							"host": [
 								"{{BASE_URL}}"
 							],
@@ -601,7 +512,7 @@
 								"api",
 								"spreadsheets",
 								"{{SPREADSHEET_ID}}",
-								"bulk_update",
+								"update_cells",
 								""
 							]
 						}
@@ -609,17 +520,25 @@
 					"response": []
 				},
 				{
-					"name": "Clear Cells",
+					"name": "Delete Cell",
 					"request": {
 						"method": "DELETE",
 						"header": [
 							{
 								"key": "Authorization",
 								"value": "Bearer {{ACCESS_TOKEN}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
 							}
 						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"row_index\": 0,\n    \"column_index\": 0,\n    \"worksheet_id\": \"{{WORKSHEET_ID}}\"\n}"
+						},
 						"url": {
-							"raw": "{{BASE_URL}}/api/spreadsheets/{{SPREADSHEET_ID}}/clear_cells/",
+							"raw": "{{BASE_URL}}/api/spreadsheets/{{SPREADSHEET_ID}}/delete_cell/",
 							"host": [
 								"{{BASE_URL}}"
 							],
@@ -627,7 +546,7 @@
 								"api",
 								"spreadsheets",
 								"{{SPREADSHEET_ID}}",
-								"clear_cells",
+								"delete_cell",
 								""
 							]
 						}
@@ -690,10 +609,10 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"name\": \"Sheet2\",\n    \"position\": 2,\n    \"is_active\": false\n}"
+							"raw": "{\n    \"name\": \"Sheet2\"\n}"
 						},
 						"url": {
-							"raw": "{{BASE_URL}}/api/spreadsheets/{{SPREADSHEET_ID}}/worksheets/",
+							"raw": "{{BASE_URL}}/api/spreadsheets/{{SPREADSHEET_ID}}/create_worksheet/",
 							"host": [
 								"{{BASE_URL}}"
 							],
@@ -701,7 +620,7 @@
 								"api",
 								"spreadsheets",
 								"{{SPREADSHEET_ID}}",
-								"worksheets",
+								"create_worksheet",
 								""
 							]
 						}
@@ -709,9 +628,9 @@
 					"response": []
 				},
 				{
-					"name": "Update Worksheet",
+					"name": "Rename Worksheet",
 					"request": {
-						"method": "PUT",
+						"method": "POST",
 						"header": [
 							{
 								"key": "Authorization",
@@ -724,18 +643,52 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"name\": \"Updated Sheet Name\",\n    \"is_active\": true\n}"
+							"raw": "{\n    \"worksheet_id\": \"{{WORKSHEET_ID}}\",\n    \"name\": \"Updated Sheet Name\"\n}"
 						},
 						"url": {
-							"raw": "{{BASE_URL}}/api/spreadsheets/worksheets/{{WORKSHEET_ID}}/",
+							"raw": "{{BASE_URL}}/api/spreadsheets/{{SPREADSHEET_ID}}/rename_worksheet/",
 							"host": [
 								"{{BASE_URL}}"
 							],
 							"path": [
 								"api",
 								"spreadsheets",
-								"worksheets",
-								"{{WORKSHEET_ID}}",
+								"{{SPREADSHEET_ID}}",
+								"rename_worksheet",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Set Active Worksheet",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"worksheet_id\": \"{{WORKSHEET_ID}}\"\n}"
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/api/spreadsheets/{{SPREADSHEET_ID}}/set_active_worksheet/",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"spreadsheets",
+								"{{SPREADSHEET_ID}}",
+								"set_active_worksheet",
 								""
 							]
 						}
@@ -750,18 +703,250 @@
 							{
 								"key": "Authorization",
 								"value": "Bearer {{ACCESS_TOKEN}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
 							}
 						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"worksheet_id\": \"{{WORKSHEET_ID}}\"\n}"
+						},
 						"url": {
-							"raw": "{{BASE_URL}}/api/spreadsheets/worksheets/{{WORKSHEET_ID}}/",
+							"raw": "{{BASE_URL}}/api/spreadsheets/{{SPREADSHEET_ID}}/delete_worksheet/",
 							"host": [
 								"{{BASE_URL}}"
 							],
 							"path": [
 								"api",
 								"spreadsheets",
-								"worksheets",
-								"{{WORKSHEET_ID}}",
+								"{{SPREADSHEET_ID}}",
+								"delete_worksheet",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Worksheet Cells",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BASE_URL}}/api/spreadsheets/{{SPREADSHEET_ID}}/worksheet_cells/?worksheet_id={{WORKSHEET_ID}}",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"spreadsheets",
+								"{{SPREADSHEET_ID}}",
+								"worksheet_cells",
+								""
+							],
+							"query": [
+								{
+									"key": "worksheet_id",
+									"value": "{{WORKSHEET_ID}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Worksheet Cells",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"worksheet_id\": \"{{WORKSHEET_ID}}\",\n    \"cells\": [\n        {\"row_index\": 0, \"column_index\": 0, \"value\": \"A1\"},\n        {\"row_index\": 0, \"column_index\": 1, \"value\": \"B1\"}\n    ]\n}"
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/api/spreadsheets/{{SPREADSHEET_ID}}/update_worksheet_cells/",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"spreadsheets",
+								"{{SPREADSHEET_ID}}",
+								"update_worksheet_cells",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Save Worksheet Names",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"worksheet_names\": {\n        \"sheet-id-1\": \"Sales\",\n        \"sheet-id-2\": \"Summary\"\n    }\n}"
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/api/spreadsheets/{{SPREADSHEET_ID}}/save_worksheet_names/",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"spreadsheets",
+								"{{SPREADSHEET_ID}}",
+								"save_worksheet_names",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Import CSV",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": ""
+								}
+							]
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/api/spreadsheets/{{SPREADSHEET_ID}}/import_csv/",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"spreadsheets",
+								"{{SPREADSHEET_ID}}",
+								"import_csv",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Import Excel",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": ""
+								}
+							]
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/api/spreadsheets/{{SPREADSHEET_ID}}/import_excel/",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"spreadsheets",
+								"{{SPREADSHEET_ID}}",
+								"import_excel",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Export CSV",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BASE_URL}}/api/spreadsheets/{{SPREADSHEET_ID}}/export_csv/",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"spreadsheets",
+								"{{SPREADSHEET_ID}}",
+								"export_csv",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Export Excel",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BASE_URL}}/api/spreadsheets/{{SPREADSHEET_ID}}/export_excel/",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"spreadsheets",
+								"{{SPREADSHEET_ID}}",
+								"export_excel",
 								""
 							]
 						}
@@ -922,9 +1107,9 @@
 					"response": []
 				},
 				{
-					"name": "Delete Analysis",
+					"name": "Get Analysis Results",
 					"request": {
-						"method": "DELETE",
+						"method": "GET",
 						"header": [
 							{
 								"key": "Authorization",
@@ -932,7 +1117,7 @@
 							}
 						],
 						"url": {
-							"raw": "{{BASE_URL}}/api/analysis/{{ANALYSIS_ID}}/",
+							"raw": "{{BASE_URL}}/api/analysis/{{ANALYSIS_ID}}/results/",
 							"host": [
 								"{{BASE_URL}}"
 							],
@@ -940,150 +1125,7 @@
 								"api",
 								"analysis",
 								"{{ANALYSIS_ID}}",
-								""
-							]
-						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "Charts",
-			"item": [
-				{
-					"name": "List Charts",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{ACCESS_TOKEN}}"
-							}
-						],
-						"url": {
-							"raw": "{{BASE_URL}}/api/charts/",
-							"host": [
-								"{{BASE_URL}}"
-							],
-							"path": [
-								"api",
-								"charts",
-								""
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Create Chart",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{ACCESS_TOKEN}}"
-							},
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"spreadsheet\": \"{{SPREADSHEET_ID}}\",\n    \"name\": \"Sales Chart\",\n    \"chart_type\": \"bar\",\n    \"data_range\": {\n        \"start_row\": 0,\n        \"end_row\": 10,\n        \"start_col\": 0,\n        \"end_col\": 2\n    },\n    \"chart_config\": {\n        \"title\": \"Monthly Sales\",\n        \"x_axis\": \"Month\",\n        \"y_axis\": \"Revenue\"\n    }\n}"
-						},
-						"url": {
-							"raw": "{{BASE_URL}}/api/charts/",
-							"host": [
-								"{{BASE_URL}}"
-							],
-							"path": [
-								"api",
-								"charts",
-								""
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Get Chart Details",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{ACCESS_TOKEN}}"
-							}
-						],
-						"url": {
-							"raw": "{{BASE_URL}}/api/charts/{{CHART_ID}}/",
-							"host": [
-								"{{BASE_URL}}"
-							],
-							"path": [
-								"api",
-								"charts",
-								"{{CHART_ID}}",
-								""
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Update Chart",
-					"request": {
-						"method": "PUT",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{ACCESS_TOKEN}}"
-							},
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"name\": \"Updated Chart Name\",\n    \"chart_type\": \"line\",\n    \"chart_config\": {\n        \"title\": \"Updated Title\"\n    }\n}"
-						},
-						"url": {
-							"raw": "{{BASE_URL}}/api/charts/{{CHART_ID}}/",
-							"host": [
-								"{{BASE_URL}}"
-							],
-							"path": [
-								"api",
-								"charts",
-								"{{CHART_ID}}",
-								""
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Delete Chart",
-					"request": {
-						"method": "DELETE",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{ACCESS_TOKEN}}"
-							}
-						],
-						"url": {
-							"raw": "{{BASE_URL}}/api/charts/{{CHART_ID}}/",
-							"host": [
-								"{{BASE_URL}}"
-							],
-							"path": [
-								"api",
-								"charts",
-								"{{CHART_ID}}",
+								"results",
 								""
 							]
 						}
@@ -1290,7 +1332,7 @@
 					"response": []
 				},
 				{
-					"name": "Assign Role to User",
+					"name": "Assign Role to User (Create UserRole)",
 					"request": {
 						"method": "POST",
 						"header": [
@@ -1305,10 +1347,10 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"user_id\": \"{{USER_ID}}\",\n    \"role_id\": \"{{ROLE_ID}}\"\n}"
+							"raw": "{\n    \"user\": \"{{USER_ID}}\",\n    \"role\": \"{{ROLE_ID}}\"\n}"
 						},
 						"url": {
-							"raw": "{{BASE_URL}}/api/rbac/user-roles/assign/",
+							"raw": "{{BASE_URL}}/api/rbac/user-roles/",
 							"host": [
 								"{{BASE_URL}}"
 							],
@@ -1316,7 +1358,6 @@
 								"api",
 								"rbac",
 								"user-roles",
-								"assign",
 								""
 							]
 						}
@@ -1350,6 +1391,327 @@
 					"response": []
 				},
 				{
+					"name": "List RBAC Users",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BASE_URL}}/api/rbac/users/",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"rbac",
+								"users",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create RBAC User",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"newuser\",\n    \"email\": \"newuser@example.com\",\n    \"password\": \"SecurePass123!\",\n    \"first_name\": \"New\",\n    \"last_name\": \"User\",\n    \"role_ids\": [],\n    \"is_active\": true\n}"
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/api/rbac/users/",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"rbac",
+								"users",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get RBAC User Details",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BASE_URL}}/api/rbac/users/{{USER_ID}}/",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"rbac",
+								"users",
+								"{{USER_ID}}",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update RBAC User",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"first_name\": \"Updated\",\n    \"last_name\": \"Name\",\n    \"role_ids\": []\n}"
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/api/rbac/users/{{USER_ID}}/",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"rbac",
+								"users",
+								"{{USER_ID}}",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Patch RBAC User (e.g. module_access)",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"module_access\": {\n        \"spreadsheets\": true,\n        \"analysis\": true\n    }\n}"
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/api/rbac/users/{{USER_ID}}/",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"rbac",
+								"users",
+								"{{USER_ID}}",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete RBAC User",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BASE_URL}}/api/rbac/users/{{USER_ID}}/",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"rbac",
+								"users",
+								"{{USER_ID}}",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get User Permissions",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BASE_URL}}/api/rbac/users/{{USER_ID}}/permissions/",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"rbac",
+								"users",
+								"{{USER_ID}}",
+								"permissions",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get User Roles",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BASE_URL}}/api/rbac/users/{{USER_ID}}/roles/",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"rbac",
+								"users",
+								"{{USER_ID}}",
+								"roles",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Set User Password",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"password\": \"NewSecurePass123!\"\n}"
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/api/rbac/users/{{USER_ID}}/set_password/",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"rbac",
+								"users",
+								"{{USER_ID}}",
+								"set_password",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Activate User",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BASE_URL}}/api/rbac/users/{{USER_ID}}/activate/",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"rbac",
+								"users",
+								"{{USER_ID}}",
+								"activate",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Deactivate User",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BASE_URL}}/api/rbac/users/{{USER_ID}}/deactivate/",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"rbac",
+								"users",
+								"{{USER_ID}}",
+								"deactivate",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "List Activity Logs",
 					"request": {
 						"method": "GET",
@@ -1374,6 +1736,106 @@
 								{
 									"key": "limit",
 									"value": "50"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Activity Logs - Recent",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BASE_URL}}/api/rbac/activity-logs/recent/?days=7",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"rbac",
+								"activity-logs",
+								"recent",
+								""
+							],
+							"query": [
+								{
+									"key": "days",
+									"value": "7"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Activity Logs - By User",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BASE_URL}}/api/rbac/activity-logs/by_user/?user_id={{USER_ID}}",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"rbac",
+								"activity-logs",
+								"by_user",
+								""
+							],
+							"query": [
+								{
+									"key": "user_id",
+									"value": "{{USER_ID}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Activity Logs - By Object",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BASE_URL}}/api/rbac/activity-logs/by_object/?model_name=Spreadsheet&object_id={{SPREADSHEET_ID}}",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"rbac",
+								"activity-logs",
+								"by_object",
+								""
+							],
+							"query": [
+								{
+									"key": "model_name",
+									"value": "Spreadsheet"
+								},
+								{
+									"key": "object_id",
+									"value": "{{SPREADSHEET_ID}}"
 								}
 							]
 						}
@@ -1537,6 +1999,194 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "Activate Company",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BASE_URL}}/api/companies/{{COMPANY_ID}}/activate/",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"companies",
+								"{{COMPANY_ID}}",
+								"activate",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Suspend Company",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BASE_URL}}/api/companies/{{COMPANY_ID}}/suspend/",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"companies",
+								"{{COMPANY_ID}}",
+								"suspend",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Company Users",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BASE_URL}}/api/companies/{{COMPANY_ID}}/users/",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"companies",
+								"{{COMPANY_ID}}",
+								"users",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Subscription Features",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"max_users\": 20,\n    \"max_spreadsheets\": 200,\n    \"max_storage_mb\": 1024\n}"
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/api/companies/{{COMPANY_ID}}/update-subscription-features/",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"companies",
+								"{{COMPANY_ID}}",
+								"update-subscription-features",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Company Stats",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BASE_URL}}/api/companies/{{COMPANY_ID}}/stats/",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"companies",
+								"{{COMPANY_ID}}",
+								"stats",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "My Company",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BASE_URL}}/api/companies/my-company/",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"companies",
+								"my-company",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Product Modules",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BASE_URL}}/api/companies/product-modules/",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"api",
+								"companies",
+								"product-modules",
+								""
+							]
+						}
+					},
+					"response": []
 				}
 			]
 		},
@@ -1639,7 +2289,7 @@
 					"response": []
 				},
 				{
-					"name": "Get Active Subscription",
+					"name": "Get Subscription History",
 					"request": {
 						"method": "GET",
 						"header": [
@@ -1649,14 +2299,15 @@
 							}
 						],
 						"url": {
-							"raw": "{{BASE_URL}}/api/subscriptions/active/",
+							"raw": "{{BASE_URL}}/api/subscriptions/{{SUBSCRIPTION_ID}}/history/",
 							"host": [
 								"{{BASE_URL}}"
 							],
 							"path": [
 								"api",
 								"subscriptions",
-								"active",
+								"{{SUBSCRIPTION_ID}}",
+								"history",
 								""
 							]
 						}
@@ -1746,7 +2397,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"plan_type\": \"monthly\"\n}"
+							"raw": "{\n    \"days\": 365\n}"
 						},
 						"url": {
 							"raw": "{{BASE_URL}}/api/subscriptions/{{SUBSCRIPTION_ID}}/renew/",
@@ -1758,31 +2409,6 @@
 								"subscriptions",
 								"{{SUBSCRIPTION_ID}}",
 								"renew",
-								""
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Check Subscription Status",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{ACCESS_TOKEN}}"
-							}
-						],
-						"url": {
-							"raw": "{{BASE_URL}}/api/subscriptions/status/",
-							"host": [
-								"{{BASE_URL}}"
-							],
-							"path": [
-								"api",
-								"subscriptions",
-								"status",
 								""
 							]
 						}
@@ -1936,11 +2562,6 @@
 		},
 		{
 			"key": "ANALYSIS_ID",
-			"value": "",
-			"type": "string"
-		},
-		{
-			"key": "CHART_ID",
 			"value": "",
 			"type": "string"
 		},
