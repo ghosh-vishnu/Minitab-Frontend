@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useParams, useNavigate, Link, useLocation } from 'react-router-dom'
 import { companiesAPI, Company, UpdateCompanyData, ProductModule } from '../api/companies'
 import { subscriptionsAPI, plansAPI } from '../api/subscriptions'
 import type { SubscriptionPlan } from '../types/subscription'
@@ -8,6 +8,8 @@ import toast from 'react-hot-toast'
 export default function CompanyDetails() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const location = useLocation()
+  const isEditPath = location.pathname.endsWith('/edit')
   const [company, setCompany] = useState<Company | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -44,6 +46,10 @@ export default function CompanyDetails() {
     }
   }, [id])
 
+  useEffect(() => {
+    if (isEditPath && company && !loading) setIsEditing(true)
+  }, [isEditPath, company, loading])
+
   const loadCompany = async () => {
     if (!id) return
 
@@ -58,6 +64,7 @@ export default function CompanyDetails() {
         phone: data.phone || '',
         address: data.address_line1 || data.address || '',
         website: data.website || '',
+        GST_NO: data.GST_NO ?? '',
         module_access: data.module_access ?? {},
       })
       if (data.subscription) {
@@ -272,8 +279,9 @@ export default function CompanyDetails() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Link
-                to="/super-admin"
+                to="/super-admin/company/all-company"
                 className="text-gray-600 hover:text-gray-900"
+                title="Back to All Company"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -364,6 +372,17 @@ export default function CompanyDetails() {
                   </div>
 
                   <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">GST No / CIN</label>
+                    <input
+                      type="text"
+                      value={formData.GST_NO || ''}
+                      onChange={(e) => setFormData({ ...formData, GST_NO: e.target.value })}
+                      placeholder="e.g. GST No, CIN"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
                     <textarea
                       value={formData.address || ''}
@@ -384,6 +403,7 @@ export default function CompanyDetails() {
                           phone: company.phone || '',
                           address: company.address || '',
                           website: company.website || '',
+                          GST_NO: company.GST_NO ?? '',
                           module_access: company.module_access ?? {},
                         })
                       }}
@@ -411,6 +431,11 @@ export default function CompanyDetails() {
                     <div>
                       <label className="block text-sm font-medium text-gray-500">Phone</label>
                       <p className="mt-1 text-sm text-gray-900">{company.phone || '-'}</p>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-500">GST No / CIN</label>
+                      <p className="mt-1 text-sm text-gray-900">{company.GST_NO || '-'}</p>
                     </div>
 
                     <div>

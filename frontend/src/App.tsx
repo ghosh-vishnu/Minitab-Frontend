@@ -5,6 +5,11 @@ import { ModalProvider } from './context/ModalContext'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import Dashboard from './pages/Dashboard'
+import SuperAdminLayout from './components/SuperAdminLayout'
+import SuperAdminHome from './pages/SuperAdminHome'
+import SuperAdminAllCompany from './pages/SuperAdminAllCompany'
+import SuperAdminUserLicense from './pages/SuperAdminUserLicense'
+import SuperAdminLicenseDetail from './pages/SuperAdminLicenseDetail'
 import SuperAdminDashboard from './pages/SuperAdminDashboard'
 import CompanyAdminDashboard from './pages/CompanyAdminDashboard'
 import CompanyAdminProfile from './pages/CompanyAdminProfile'
@@ -51,23 +56,26 @@ function App() {
             element={isAuthenticated ? <DashboardRedirect /> : <Register />}
           />
 
-          {/* Super Admin Routes */}
+          {/* Super Admin Routes – layout with sidebar + header (QSSENCE style) */}
           <Route
             path="/super-admin"
             element={
               <SuperAdminRoute>
-                <SuperAdminDashboard />
+                <SuperAdminLayout />
               </SuperAdminRoute>
             }
-          />
-          <Route
-            path="/super-admin/companies/:id"
-            element={
-              <SuperAdminRoute>
-                <CompanyDetails />
-              </SuperAdminRoute>
-            }
-          />
+          >
+            <Route index element={<SuperAdminHome />} />
+            <Route path="company/all-company" element={<SuperAdminAllCompany />} />
+            <Route path="company/user-license" element={<SuperAdminUserLicense />} />
+            <Route path="company/user-license/view/:id" element={<SuperAdminLicenseDetail />} />
+            <Route path="companies/:id" element={<CompanyDetails />} />
+            <Route path="companies/:id/edit" element={<CompanyDetails />} />
+            <Route path="plans" element={<SuperAdminHome />} />
+            <Route path="subscriptions" element={<SuperAdminHome />} />
+            <Route path="transactions" element={<SuperAdminHome />} />
+            <Route path="settings" element={<SuperAdminHome />} />
+          </Route>
 
           {/* Company Admin Routes */}
           <Route

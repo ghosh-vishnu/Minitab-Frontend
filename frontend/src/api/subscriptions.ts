@@ -186,6 +186,82 @@ export const plansAPI = {
 }
 
 /**
+ * Software / User License (Super Admin)
+ */
+export interface SoftwareLicense {
+  id: number
+  company: string
+  company_id: string
+  company_name: string
+  license_key: string
+  product_name: string
+  total_user_access: number
+  purchase_date: string | null
+  expiration_date: string | null
+  status: string
+  created_at: string
+  application_plan?: string | null
+  license_term?: string | null
+  purchase_cost?: string | number | null
+  activation_limit?: number | null
+  location?: string | null
+  description?: string | null
+  module_access?: Record<string, string[]> | null
+  updated_at?: string
+}
+
+export interface CreateSoftwareLicenseData {
+  company: string
+  license_key?: string
+  product_name?: string
+  application_plan?: string
+  purchase_date?: string
+  expiration_date?: string
+  license_term?: string
+  purchase_cost?: number
+  total_user_access?: number
+  activation_limit?: number
+  location?: string
+  description?: string
+  module_access?: Record<string, string[]>
+  status?: string
+}
+
+export const licensesAPI = {
+  list: async (params?: { page?: number; page_size?: number }): Promise<PaginatedResponse<SoftwareLicense>> => {
+    const response = await api.get<PaginatedResponse<SoftwareLicense>>('/subscriptions/licenses/', { params })
+    return response.data
+  },
+  get: async (id: number): Promise<SoftwareLicense> => {
+    const response = await api.get<SoftwareLicense>(`/subscriptions/licenses/${id}/`)
+    return response.data
+  },
+  create: async (data: CreateSoftwareLicenseData): Promise<SoftwareLicense> => {
+    const response = await api.post<SoftwareLicense>('/subscriptions/licenses/', data)
+    return response.data
+  },
+  update: async (id: number, data: Partial<CreateSoftwareLicenseData>): Promise<SoftwareLicense> => {
+    const response = await api.patch<SoftwareLicense>(`/subscriptions/licenses/${id}/`, data)
+    return response.data
+  },
+  delete: async (id: number): Promise<void> => {
+    await api.delete(`/subscriptions/licenses/${id}/`)
+  },
+  activate: async (id: number): Promise<{ status: string }> => {
+    const response = await api.post<{ status: string }>(`/subscriptions/licenses/${id}/activate/`)
+    return response.data
+  },
+  disable: async (id: number): Promise<{ status: string }> => {
+    const response = await api.post<{ status: string }>(`/subscriptions/licenses/${id}/disable/`)
+    return response.data
+  },
+  extend: async (id: number, data?: { expiration_date?: string; extend_days?: number }): Promise<SoftwareLicense> => {
+    const response = await api.post<SoftwareLicense>(`/subscriptions/licenses/${id}/extend/`, data || {})
+    return response.data
+  },
+}
+
+/**
  * Combined export
  */
 const subscriptionsService = {

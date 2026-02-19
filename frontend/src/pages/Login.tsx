@@ -8,7 +8,7 @@ import toast from 'react-hot-toast'
 interface LoginForm {
   email: string
   password: string
-  company_code: string
+  license_key: string
 }
 
 const Login = () => {
@@ -43,8 +43,8 @@ const Login = () => {
         return
       }
 
-      if (data.company_code?.trim()) {
-        loginData.company_code = data.company_code.trim().toUpperCase()
+      if (data.license_key?.trim()) {
+        loginData.license_key = data.license_key.trim()
       }
 
       const response = await authAPI.login(loginData)
@@ -175,11 +175,11 @@ const Login = () => {
                 Licence Key
               </label>
               <input
-                {...register('company_code')}
+                {...register('license_key')}
                 type="text"
-                className="w-full px-4 py-2 border border-gray-300 rounded-md uppercase"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md"
                 placeholder="Enter licence key"
-                maxLength={20}
+                maxLength={50}
               />
             </div>
 

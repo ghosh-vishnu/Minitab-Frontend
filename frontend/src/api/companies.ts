@@ -4,6 +4,8 @@ export interface Company {
   id: string
   name: string
   company_code: string
+  /** Company license / business ID (GST No, CIN). Not a system-generated license key. */
+  GST_NO?: string | null
   email: string
   phone?: string
   address?: string
@@ -16,6 +18,8 @@ export interface Company {
   website?: string
   status: 'active' | 'inactive' | 'suspended' | 'pending'
   is_active: boolean
+  /** Present when fetched with ?view=minimal (View Company modal). */
+  time_zone?: string | null
   primary_admin?: {
     id: string
     username: string
@@ -40,30 +44,42 @@ export interface Company {
     max_storage_mb?: number | null
   }
   settings?: Record<string, any>
-  /** Per-module access: module_id -> list of allowed submodule ids (company-wide) */
   module_access?: Record<string, string[]>
-  /** For current user: effective access (company ∩ user restriction). Use this for UI filtering. */
   effective_module_access?: Record<string, string[]>
   created_at: string
   updated_at: string
 }
 
+/** Create Company payload for Super Admin dashboard (matches Create Company modal). */
 export interface CreateCompanyData {
+  /** Company name */
   name: string
+  /** Company email */
   email: string
+  /** Mobile number */
   phone?: string
+  /** Location / address */
   address?: string
+  /** Region (maps to state) */
+  state?: string
+  /** Country */
+  country?: string
+  /** IANA time zone e.g. Asia/Kolkata */
+  time_zone?: string
+  /** Company GST No / CIN (sent as GST_NO to API). */
+  tax_id?: string
   website?: string
   max_users: number
-  admin_username: string
+  /** If omitted, backend derives from admin_email */
+  admin_username?: string
   admin_email: string
   admin_password: string
+  /** Must match admin_password */
+  admin_confirm_password: string
   admin_first_name?: string
   admin_last_name?: string
-  // Subscription configuration: either duration (in months) or custom end date (YYYY-MM-DD)
   subscription_duration_months?: number
   subscription_end_date?: string
-  /** Module access: { module_id: [submodule_id, ...], ... } */
   module_access?: Record<string, string[]>
 }
 
@@ -72,11 +88,17 @@ export interface UpdateCompanyData {
   email?: string
   phone?: string
   address?: string
+  state?: string
+  country?: string
   website?: string
+  GST_NO?: string
   status?: 'active' | 'inactive' | 'suspended' | 'pending'
   is_active?: boolean
   settings?: Record<string, any>
   module_access?: Record<string, string[]>
+  /** Reset primary admin password. Both required to reset. */
+  admin_new_password?: string
+  admin_confirm_password?: string
 }
 
 export interface AssignSubscriptionData {
@@ -120,9 +142,9 @@ export const companiesAPI = {
     return response.data
   },
 
-  // Get single company details
-  getCompany: async (id: string) => {
-    const response = await api.get<Company>(`/companies/${id}/`)
+  // Get single company details. Pass { view: 'minimal' } for View Company modal (fewer fields).
+  getCompany: async (id: string, params?: { view?: 'minimal' }) => {
+    const response = await api.get<Company>(`/companies/${id}/`, { params })
     return response.data
   },
 
