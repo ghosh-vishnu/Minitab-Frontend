@@ -75,10 +75,31 @@ export default function SuperAdminLicenseDetail() {
       </div>
 
       <div className="bg-white rounded-lg border border-gray-200 p-6 space-y-6">
+        <h2 className="text-sm font-semibold text-gray-900">License Details</h2>
         <div className="grid grid-cols-2 gap-6">
+          <div>
+            <p className="text-sm font-medium text-gray-500">License ID</p>
+            <p className="mt-1 text-gray-900">{license.id}</p>
+          </div>
           <div>
             <p className="text-sm font-medium text-gray-500">License Key</p>
             <p className="mt-1 text-gray-900 font-mono">{license.license_key || '-'}</p>
+          </div>
+          <div>
+            <p className="text-sm font-medium text-gray-500">Company / Customer</p>
+            <p className="mt-1 text-gray-900">{license.company_name || '-'}</p>
+          </div>
+          <div>
+            <p className="text-sm font-medium text-gray-500">Company ID</p>
+            <p className="mt-1 text-gray-900 font-mono">{license.company_id || '-'}</p>
+          </div>
+          <div>
+            <p className="text-sm font-medium text-gray-500">Product</p>
+            <p className="mt-1 text-gray-900">{license.product_name || '-'}</p>
+          </div>
+          <div>
+            <p className="text-sm font-medium text-gray-500">Status</p>
+            <p className="mt-1 text-gray-900 capitalize">{license.status || '-'}</p>
           </div>
           <div>
             <p className="text-sm font-medium text-gray-500">Purchase Date</p>
@@ -89,26 +110,49 @@ export default function SuperAdminLicenseDetail() {
             <p className="mt-1 text-gray-900">{formatDate(license.expiration_date)}</p>
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-500">License Term</p>
-            <p className="mt-1 text-gray-900">{license.license_term || '-'}</p>
-          </div>
-          <div>
-            <p className="text-sm font-medium text-gray-500">Product</p>
-            <p className="mt-1 text-gray-900">{license.product_name || '-'}</p>
+            <p className="text-sm font-medium text-gray-500">Total User Access</p>
+            <p className="mt-1 text-gray-900">{license.total_user_access ?? '-'}</p>
           </div>
           <div>
             <p className="text-sm font-medium text-gray-500">Activation Limit</p>
             <p className="mt-1 text-gray-900">{activationDisplay}</p>
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-500">Status</p>
-            <p className="mt-1 text-gray-900 capitalize">{license.status || '-'}</p>
+            <p className="text-sm font-medium text-gray-500">Location</p>
+            <p className="mt-1 text-gray-900">{license.location || '-'}</p>
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-500">Customer</p>
-            <p className="mt-1 text-gray-900">{license.company_name || '-'}</p>
+            <p className="text-sm font-medium text-gray-500">Created At</p>
+            <p className="mt-1 text-gray-900">{license.created_at ? new Date(license.created_at).toLocaleString() : '-'}</p>
+          </div>
+          <div>
+            <p className="text-sm font-medium text-gray-500">Updated At</p>
+            <p className="mt-1 text-gray-900">{license.updated_at ? new Date(license.updated_at).toLocaleString() : '-'}</p>
           </div>
         </div>
+
+        {license.description && (
+          <div className="pt-4 border-t border-gray-200">
+            <p className="text-sm font-medium text-gray-500 mb-1">Description</p>
+            <p className="text-gray-900 whitespace-pre-wrap">{license.description}</p>
+          </div>
+        )}
+
+        {license.module_access && Object.keys(license.module_access).length > 0 && (
+          <div className="pt-4 border-t border-gray-200">
+            <p className="text-sm font-medium text-gray-500 mb-2">Module Access</p>
+            <div className="flex flex-wrap gap-2">
+              {Object.entries(license.module_access).map(([modId, subIds]) => (
+                <div key={modId} className="px-3 py-1.5 bg-gray-100 rounded-lg text-sm">
+                  <span className="font-medium text-gray-900">{modId}</span>
+                  {Array.isArray(subIds) && subIds.length > 0 && (
+                    <span className="text-gray-600">: {subIds.join(', ')}</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="flex flex-wrap gap-2 pt-4 border-t border-gray-200">
           <button

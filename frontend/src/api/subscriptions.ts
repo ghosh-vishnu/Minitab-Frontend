@@ -200,9 +200,6 @@ export interface SoftwareLicense {
   expiration_date: string | null
   status: string
   created_at: string
-  application_plan?: string | null
-  license_term?: string | null
-  purchase_cost?: string | number | null
   activation_limit?: number | null
   location?: string | null
   description?: string | null
@@ -214,11 +211,8 @@ export interface CreateSoftwareLicenseData {
   company: string
   license_key?: string
   product_name?: string
-  application_plan?: string
   purchase_date?: string
   expiration_date?: string
-  license_term?: string
-  purchase_cost?: number
   total_user_access?: number
   activation_limit?: number
   location?: string

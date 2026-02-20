@@ -25,6 +25,7 @@ export default function SuperAdminUserLicense() {
   const [page, setPage] = useState(1)
   const [totalCount, setTotalCount] = useState(0)
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [editLicenseId, setEditLicenseId] = useState<number | null>(null)
   const [companies, setCompanies] = useState<Company[]>([])
   const navigate = useNavigate()
 
@@ -63,6 +64,18 @@ export default function SuperAdminUserLicense() {
       toast.success('License created')
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Create failed'
+      throw new Error(msg)
+    }
+  }
+
+  const handleEditLicense = async (id: number, data: Partial<CreateSoftwareLicenseData>) => {
+    try {
+      await licensesAPI.update(id, data)
+      setEditLicenseId(null)
+      loadLicenses()
+      toast.success('License updated')
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Update failed'
       throw new Error(msg)
     }
   }
@@ -162,6 +175,16 @@ export default function SuperAdminUserLicense() {
                           </button>
                           <button
                             type="button"
+                            onClick={() => setEditLicenseId(lic.id)}
+                            className="p-1.5 text-gray-500 hover:text-amber-600 hover:bg-amber-50 rounded"
+                            title="Edit"
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                          </button>
+                          <button
+                            type="button"
                             onClick={() => {
                               if (window.confirm('Delete this license?')) {
                                 licensesAPI.delete(lic.id).then(() => {
@@ -203,6 +226,208 @@ export default function SuperAdminUserLicense() {
           onSubmit={handleCreateLicense}
         />
       )}
+      {editLicenseId !== null && (
+        <EditLicenseModal
+          licenseId={editLicenseId}
+          companies={companies}
+          onClose={() => setEditLicenseId(null)}
+          onSubmit={(data) => handleEditLicense(editLicenseId, data)}
+        />
+      )}
+    </div>
+  )
+}
+
+function EditLicenseModal({
+  licenseId,
+  companies,
+  onClose,
+  onSubmit,
+}: {
+  licenseId: number
+  companies: Company[]
+  onClose: () => void
+  onSubmit: (data: Partial<CreateSoftwareLicenseData>) => Promise<void>
+}) {
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
+  const [license, setLicense] = useState<SoftwareLicense | null>(null)
+  const [productModules, setProductModules] = useState<ProductModule[]>([])
+  const [moduleAccess, setModuleAccess] = useState<Record<string, string[]>>({})
+  const [form, setForm] = useState<{
+    product_name: string
+    purchase_date: string
+    expiration_date: string
+    location: string
+    total_user_access: number
+    description: string
+  }>({
+    product_name: 'Minitab',
+    purchase_date: '',
+    expiration_date: '',
+    location: '',
+    total_user_access: 10,
+    description: '',
+  })
+
+  useEffect(() => {
+    Promise.all([
+      licensesAPI.get(licenseId),
+      companiesAPI.getProductModules(),
+    ]).then(([lic, modules]) => {
+      setLicense(lic)
+      setProductModules(modules)
+      setModuleAccess(lic.module_access ?? {})
+      const pd = lic.purchase_date ? lic.purchase_date.slice(0, 10) : ''
+      const ed = lic.expiration_date ? lic.expiration_date.slice(0, 10) : ''
+      setForm({
+        product_name: lic.product_name ?? 'Minitab',
+        purchase_date: pd,
+        expiration_date: ed,
+        location: lic.location ?? '',
+        total_user_access: lic.total_user_access ?? 10,
+        description: lic.description ?? '',
+      })
+    }).catch(() => setErr('Failed to load license')).finally(() => setLoading(false))
+  }, [licenseId])
+
+  const toggleModule = (moduleId: string) => {
+    setModuleAccess((prev) => {
+      if (prev[moduleId] !== undefined) {
+        const next = { ...prev }
+        delete next[moduleId]
+        return next
+      }
+      return { ...prev, [moduleId]: [] }
+    })
+  }
+
+  const toggleSubmodule = (moduleId: string, subId: string) => {
+    const current = moduleAccess[moduleId] ?? []
+    const next = current.includes(subId) ? current.filter((s) => s !== subId) : [...current, subId]
+    setModuleAccess((prev) => ({ ...prev, [moduleId]: next }))
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setErr(null)
+    setSaving(true)
+    try {
+      const payload: Partial<CreateSoftwareLicenseData> = {
+        product_name: form.product_name || 'Minitab',
+        purchase_date: form.purchase_date || undefined,
+        expiration_date: form.expiration_date || undefined,
+        location: form.location || undefined,
+        total_user_access: form.total_user_access ?? 10,
+        description: form.description || undefined,
+        module_access: Object.keys(moduleAccess).length ? moduleAccess : undefined,
+      }
+      await onSubmit(payload)
+    } catch (e) {
+      setErr((e as Error).message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={onClose}>
+        <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full p-8 text-center text-gray-500">Loading...</div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={onClose}>
+      <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+          <h2 className="text-lg font-semibold text-gray-900">Edit Software License</h2>
+          <button type="button" onClick={onClose} className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg" aria-label="Close">×</button>
+        </div>
+        <form onSubmit={handleSubmit} className="px-6 py-4 overflow-auto space-y-4">
+          <p className="text-sm font-medium text-gray-700">Software License Details</p>
+          {err && <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-600">{err}</div>}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Company</label>
+              <p className="mt-1 text-sm text-gray-900 font-medium">{license?.company_name ?? '-'} ({license?.company_id ?? '-'})</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">License Key</label>
+              <p className="mt-1 text-sm font-mono text-gray-600">{license?.license_key ?? '-'}</p>
+            </div>
+            <div className="col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Module access</label>
+              <div className="space-y-4 rounded-lg border border-gray-200 p-3 bg-gray-50/50">
+                {productModules.map((m) => {
+                  const isChecked = moduleAccess[m.id] !== undefined
+                  const submodules = m.submodules ?? []
+                  return (
+                    <div key={m.id} className="space-y-2">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => toggleModule(m.id)}
+                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        <span className="text-sm font-medium text-gray-900">{m.name}</span>
+                      </label>
+                      {isChecked && submodules.length > 0 && (
+                        <div className="ml-6 flex flex-wrap gap-2">
+                          {submodules.map((sub) => {
+                            const selected = (moduleAccess[m.id] ?? []).includes(sub.id)
+                            return (
+                              <button
+                                key={sub.id}
+                                type="button"
+                                onClick={() => toggleSubmodule(m.id, sub.id)}
+                                className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${selected ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}`}
+                              >
+                                {sub.name}
+                              </button>
+                            )
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Product Name</label>
+              <input type="text" value={form.product_name ?? ''} onChange={(e) => setForm({ ...form, product_name: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Total User Access</label>
+              <input type="number" min={0} required value={form.total_user_access ?? 10} onChange={(e) => setForm({ ...form, total_user_access: Number(e.target.value) })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Purchase Date</label>
+              <input type="date" required value={form.purchase_date ?? ''} onChange={(e) => setForm({ ...form, purchase_date: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Expiration Date</label>
+              <input type="date" required value={form.expiration_date ?? ''} onChange={(e) => setForm({ ...form, expiration_date: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
+            </div>
+            <div className="col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+              <input type="text" value={form.location ?? ''} onChange={(e) => setForm({ ...form, location: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+            <textarea value={form.description ?? ''} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
+          </div>
+          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+            <button type="button" onClick={onClose} className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Cancel</button>
+            <button type="submit" disabled={saving} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg disabled:opacity-50">{saving ? 'Saving...' : 'Save'}</button>
+          </div>
+        </form>
+      </div>
     </div>
   )
 }
