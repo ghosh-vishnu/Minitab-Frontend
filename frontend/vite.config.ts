@@ -20,6 +20,12 @@ export default defineConfig({
         secure: false,
         rewrite: (path) => path,
       },
+      '/license-api': {
+        target: 'http://localhost:8001',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/license-api/, '/api'),
+      },
     },
   },
 })

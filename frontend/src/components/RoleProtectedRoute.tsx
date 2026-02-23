@@ -36,7 +36,7 @@ export const RoleProtectedRoute: React.FC<RoleProtectedRouteProps> = ({
   if (!userType || !allowedRoles.includes(userType)) {
     // Redirect to appropriate dashboard based on user type
     if (isSuperAdmin()) {
-      return <Navigate to="/super-admin" replace />
+      return <Navigate to="/dashboard" replace />
     } else if (isCompanyAdmin()) {
       return <Navigate to="/company-admin" replace />
     } else if (isCompanyUser()) {

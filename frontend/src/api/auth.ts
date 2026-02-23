@@ -1,4 +1,5 @@
 import api from './axios'
+import { licenseServerApi } from './licenseServerApi'
 
 export type UserType = 'SUPER' | 'CHILD' | 'COMPANY_ADMIN' | 'COMPANY_USER'
 
@@ -70,9 +71,30 @@ export interface AuthResponse {
 }
 
 export const authAPI = {
+  /**
+   * Login: 1) License Server (company admin) -> sync to Backend.
+   * 2) If License Server 401, try Backend company-user-login (users created by company admin).
+   * Returns Backend JWT for all subsequent API calls.
+   */
   login: async (credentials: LoginCredentials): Promise<AuthResponse> => {
-    const response = await api.post<AuthResponse>('/auth/login/', credentials)
-    return response.data
+    try {
+      const lsRes = await licenseServerApi.post<AuthResponse>('/auth/login/', credentials)
+      const lsData = lsRes.data
+      const backendRes = await api.post<AuthResponse>('/auth/sync-license-session/', {
+        access: lsData.access,
+      })
+      return backendRes.data
+    } catch (lsErr: any) {
+      if (lsErr.response?.status === 401 && credentials.email && credentials.license_key) {
+        const backendRes = await api.post<AuthResponse>('/auth/company-user-login/', {
+          email: credentials.email,
+          password: credentials.password,
+          license_key: credentials.license_key,
+        })
+        return backendRes.data
+      }
+      throw lsErr
+    }
   },
 
   register: async (data: RegisterData): Promise<AuthResponse> => {

@@ -4,6 +4,12 @@ export interface Company {
   id: string
   name: string
   company_code: string
+  /** Software license key (LICENSE ID) from License Server, e.g. Y2R680FJJRZ. Distinct from company_code. */
+  license_key?: string | null
+  /** Total user access (licensed user limit) from License Server. */
+  total_user_access?: number | null
+  /** License expiration date (ISO string). */
+  license_expiration_date?: string | null
   /** Company license / business ID (GST No, CIN). Not a system-generated license key. */
   GST_NO?: string | null
   email: string
@@ -26,6 +32,8 @@ export interface Company {
     email: string
     full_name?: string
   }
+  /** Active users count (from Backend). */
+  active_users_count?: number
   subscription?: {
     id: string
     plan: {
@@ -183,9 +191,9 @@ export const companiesAPI = {
     return response.data
   },
 
-  // Get company statistics
-  getCompanyStats: async (companyId: string) => {
-    const response = await api.get<CompanyStats>(`/companies/${companyId}/stats/`)
+  // Get company statistics (uses current user's company; no companyId in URL)
+  getCompanyStats: async () => {
+    const response = await api.get<CompanyStats>('/companies/stats/')
     return response.data
   },
 

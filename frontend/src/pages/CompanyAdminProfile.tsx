@@ -99,8 +99,12 @@ export default function CompanyAdminProfile() {
                   <p className="mt-1 text-gray-900">{company.name}</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-500">Licence Key</label>
+                  <label className="block text-sm font-medium text-gray-500">Company Code</label>
                   <p className="mt-1 font-mono text-gray-900">{company.company_code}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-500">Licence Key</label>
+                  <p className="mt-1 font-mono text-gray-900">{company.license_key || '—'}</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-500">Status</label>
@@ -112,6 +116,25 @@ export default function CompanyAdminProfile() {
                     </span>
                   </p>
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-500">User Access</label>
+                  <p className="mt-1 text-gray-900">
+                    {(company.subscription?.current_users ?? company.active_users_count ?? 0)} / {company.total_user_access ?? company.subscription?.user_limit ?? company.subscription?.max_users ?? '—'}
+                    <span className="text-gray-500 text-sm ml-1">(active / licensed)</span>
+                  </p>
+                </div>
+                {company.license_expiration_date && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500">Licence Expiry</label>
+                    <p className="mt-1 text-gray-900">
+                      {new Date(company.license_expiration_date).toLocaleDateString(undefined, {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric',
+                      })}
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
 

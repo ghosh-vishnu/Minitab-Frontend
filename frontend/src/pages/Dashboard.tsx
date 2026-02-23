@@ -10,10 +10,6 @@ import { useAuthStore } from '../store/authStore'
 /** Module ids matching backend PRODUCT_MODULES (for filtering by company.module_access) */
 const DASHBOARD_MODULES = [
   { id: 'statistical_software', name: 'Excel® Statistical Software', desc: 'Analytics' },
-  { id: 'brainstorm', name: 'Excel Brainstorm', desc: 'Brainstorm' },
-  { id: 'data_center', name: 'Excel Data Center', desc: 'Data Prep' },
-  { id: 'dashboards', name: 'Excel Dashboards', desc: 'Dashboard' },
-  { id: 'workspace', name: 'Excel Workspace®', desc: 'Quality Project' },
 ] as const
 
 const Dashboard = () => {
@@ -278,8 +274,7 @@ const Dashboard = () => {
               if (!access) return true // still loading or no restriction
               return Object.prototype.hasOwnProperty.call(access, mod.id)
             }).map((mod) => {
-              const isStatistical = mod.id === 'statistical_software'
-              if (isStatistical) {
+              if (mod.id === 'statistical_software') {
                 if (!hasPermission('access_statistical_software')) return null
                 return (
                   <button
@@ -313,25 +308,7 @@ const Dashboard = () => {
                   </button>
                 )
               }
-              return (
-                <div key={mod.id} className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow cursor-pointer">
-                  <div className={`w-12 h-12 rounded-lg flex items-center justify-center mb-4 ${
-                    mod.id === 'brainstorm' ? 'bg-purple-100' :
-                    mod.id === 'data_center' ? 'bg-green-100' :
-                    mod.id === 'dashboards' ? 'bg-orange-100' : 'bg-yellow-100'
-                  }`}>
-                    <svg className={`w-6 h-6 ${
-                      mod.id === 'brainstorm' ? 'text-purple-600' :
-                      mod.id === 'data_center' ? 'text-green-600' :
-                      mod.id === 'dashboards' ? 'text-orange-600' : 'text-yellow-600'
-                    }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                    </svg>
-                  </div>
-                  <h3 className="font-semibold text-gray-900 mb-1">{mod.name}</h3>
-                  <p className="text-sm text-gray-600">{mod.desc}</p>
-                </div>
-              )
+              return null
             })}
           </div>
         </div>

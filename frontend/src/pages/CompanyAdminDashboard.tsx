@@ -34,7 +34,7 @@ export default function CompanyAdminDashboard() {
       const [usersRes, rolesRes, statsRes, companyRes, modulesRes] = await Promise.all([
         usersAPI.listCompanyUsers({ ordering: '-date_joined' }),
         rbacAPI.getRoles().then(roles => ({ results: roles.filter(r => r.scope === 'company') })),
-        user?.company ? companiesAPI.getCompanyStats(user.company.id) : Promise.resolve(null),
+        user?.company ? companiesAPI.getCompanyStats() : Promise.resolve(null),
         user?.company ? companiesAPI.getMyCompany().catch(() => null) : Promise.resolve(null),
         companiesAPI.getProductModules().catch(() => []),
       ])

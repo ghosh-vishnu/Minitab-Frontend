@@ -28,23 +28,9 @@ const Login = () => {
 
     try {
       const loginData: any = {
+        email: data.email.trim(),
         password: data.password,
-      }
-
-      if (data.email && data.email.includes('@')) {
-        loginData.email = data.email.trim()
-      } else if (data.email) {
-        loginData.username = data.email.trim()
-      }
-
-      if (!loginData.email && !loginData.username) {
-        toast.error('Please enter your email or username')
-        setLoading(false)
-        return
-      }
-
-      if (data.license_key?.trim()) {
-        loginData.license_key = data.license_key.trim()
+        license_key: data.license_key.trim(),
       }
 
       const response = await authAPI.login(loginData)
@@ -63,7 +49,9 @@ const Login = () => {
         msg = data
       } else if (data?.non_field_errors?.length) {
         msg = data.non_field_errors[0]
-      } else if (data?.detail) {
+      } else if (Array.isArray(data?.detail)) {
+        msg = data.detail[0] || msg
+      } else if (typeof data?.detail === 'string') {
         msg = data.detail
       } else if (data?.error) {
         msg = data.error
@@ -123,24 +111,27 @@ const Login = () => {
 
       <div className="w-full max-w-md">
         <div className="bg-white rounded-lg shadow-md p-8">
-          <h2 className="text-2xl font-semibold text-gray-900 mb-6">
+          <h2 className="text-2xl font-semibold text-gray-900 mb-2">
             Sign In
           </h2>
+          <p className="text-sm text-gray-500 mb-6">
+            Only companies created in License Server can access the product. Use the email, password and license key provided to your company.
+          </p>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
 
             {/* Email */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Email / Username
+                Email *
               </label>
               <input
                 {...register('email', {
-                  required: 'Email or username is required',
+                  required: 'Email is required',
                 })}
-                type="text"
+                type="email"
                 className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter your email or username"
+                placeholder="company@example.com"
               />
               {errors.email && (
                 <p className="mt-1 text-sm text-red-600">
@@ -152,7 +143,7 @@ const Login = () => {
             {/* Password */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Password
+                Password *
               </label>
               <input
                 {...register('password', {
@@ -172,15 +163,22 @@ const Login = () => {
             {/* Licence Key */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Licence Key
+                Licence Key *
               </label>
               <input
-                {...register('license_key')}
+                {...register('license_key', {
+                  required: 'License key is required. It is provided when your company is created in License Server.',
+                })}
                 type="text"
-                className="w-full px-4 py-2 border border-gray-300 rounded-md"
-                placeholder="Enter licence key"
-                maxLength={50}
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter licence key from License Server"
+                maxLength={200}
               />
+              {errors.license_key && (
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.license_key.message}
+                </p>
+              )}
             </div>
 
             <button
