@@ -13,7 +13,7 @@ interface LoginForm {
 
 const Login = () => {
   const navigate = useNavigate()
-  const { setAuth } = useAuthStore()
+  const { setAuth, setCompanyDetail } = useAuthStore()
   const [loading, setLoading] = useState(false)
   const [suspendedMessage, setSuspendedMessage] = useState<string | null>(null)
 
@@ -36,6 +36,7 @@ const Login = () => {
       const response = await authAPI.login(loginData)
 
       setAuth(response.user, response.access, response.refresh)
+      if (response.company) setCompanyDetail(response.company)
       toast.success('Logged in successfully')
       navigate('/dashboard')
 

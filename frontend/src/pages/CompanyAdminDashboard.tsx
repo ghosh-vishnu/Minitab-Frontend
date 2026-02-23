@@ -1,6 +1,23 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { usersAPI, User, CreateUserData } from '../api/users'
+
+function formatApiError(err: any): string {
+  const data = err.response?.data
+  if (!data) return err.message || 'Request failed'
+  if (typeof data.detail === 'string') return data.detail
+  if (Array.isArray(data.detail)) return (data.detail as string[]).join('. ')
+  const parts: string[] = []
+  for (const [field, messages] of Object.entries(data)) {
+    if (field === 'detail') continue
+    if (Array.isArray(messages)) {
+      parts.push(`${field}: ${(messages as string[]).join(', ')}`)
+    } else if (typeof messages === 'string') {
+      parts.push(messages)
+    }
+  }
+  return parts.length ? parts.join('; ') : 'Validation failed'
+}
 import { companiesAPI, CompanyStats, Company, ProductModule } from '../api/companies'
 import { rbacAPI, Role } from '../api/rbac'
 import { useAuthStore } from '../store/authStore'
@@ -60,7 +77,8 @@ export default function CompanyAdminDashboard() {
       setShowCreateModal(false)
       loadData()
     } catch (err: any) {
-      throw new Error(err.response?.data?.detail || err.message || 'Failed to create user')
+      const msg = formatApiError(err)
+      throw new Error(msg)
     }
   }
 

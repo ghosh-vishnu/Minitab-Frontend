@@ -43,7 +43,7 @@ export interface RegisterData {
   last_name?: string
 }
 
-/** Login API response: token + access timing. Use access token for Create Company and other APIs. */
+/** Login API response: token + access timing + optional full company. Use access token for Create Company and other APIs. */
 export interface AuthResponse {
   user: {
     id: string
@@ -58,8 +58,11 @@ export interface AuthResponse {
     user_type?: UserType
     company?: Company | null
     roles?: Role[]
-    permissions?: Permission[]
+    /** Permissions - login returns [{codename}] only; profile may return full. */
+    permissions?: { codename: string }[] | Permission[]
   }
+  /** Full company details (license_key, total_user_access, etc.) when user has company. */
+  company?: Record<string, unknown> | null
   /** JWT access token – send in Authorization: Bearer <access> for Create Company etc. */
   access: string
   /** JWT refresh token – use to get new access token when expired */
