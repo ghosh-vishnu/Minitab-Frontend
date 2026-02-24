@@ -123,7 +123,7 @@ hasRole(roleName: string): boolean
   - CreateUserModal - User creation with role assignment
   - EditUserModal - Role management
 
-#### UserDashboard (`pages/UserDashboard.tsx`)
+#### Dashboard (`pages/Dashboard.tsx`) – company user home
 - **Quick Actions:** Permission-based action cards
 - **Recent Items:** Spreadsheets, analyses (permission-based)
 - **Profile Card:** User info, company, roles
