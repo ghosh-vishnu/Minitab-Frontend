@@ -481,6 +481,89 @@ const MinitabLayout = () => {
   const [showGraphMenu, setShowGraphMenu] = useState(false)
   const [activeStatSubmenu, setActiveStatSubmenu] = useState<string | null>(null)
   const [showGraphBuilder, setShowGraphBuilder] = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
+  const [language, setLanguage] = useState(() => localStorage.getItem('minitab_language') || 'English')
+  const [region, setRegion] = useState(() => localStorage.getItem('minitab_region') || 'United States')
+  const [showLanguageDropdown, setShowLanguageDropdown] = useState(false)
+  const [showRegionDropdown, setShowRegionDropdown] = useState(false)
+  
+  // Save preferences to localStorage when they change
+  useEffect(() => {
+    localStorage.setItem('minitab_language', language)
+  }, [language])
+  
+  useEffect(() => {
+    localStorage.setItem('minitab_region', region)
+  }, [region])
+  
+  // Close dropdowns when settings modal closes
+  useEffect(() => {
+    if (!showSettings) {
+      setShowLanguageDropdown(false)
+      setShowRegionDropdown(false)
+    }
+  }, [showSettings])
+  
+  // Helper function to get locale code from region
+  const getLocaleCode = (selectedRegion: string): string => {
+    const localeMap: Record<string, string> = {
+      'United States': 'en-US',
+      'United Kingdom': 'en-GB',
+      'France': 'fr-FR',
+      'Germany': 'de-DE',
+      'Brazil': 'pt-BR',
+      'Mexico': 'es-MX',
+      'Japan': 'ja-JP',
+      'Korea': 'ko-KR',
+      'China': 'zh-CN',
+    }
+    return localeMap[selectedRegion] || 'en-US'
+  }
+  
+  // Format numbers based on selected region
+  const formatNumber = (num: number, selectedRegion: string): string => {
+    const locale = getLocaleCode(selectedRegion)
+    return new Intl.NumberFormat(locale, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(num)
+  }
+  
+  // Format date/time based on selected region
+  const formatDateTime = (selectedRegion: string): string => {
+    const locale = getLocaleCode(selectedRegion)
+    const date = new Date(2026, 1, 25, 13, 49, 7) // Feb 25, 2026, 1:49:07 PM
+    return new Intl.DateTimeFormat(locale, {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: locale.startsWith('en-US'),
+    }).format(date)
+  }
+  
+  // Format list based on selected region
+  const formatList = (selectedRegion: string): string => {
+    const locale = getLocaleCode(selectedRegion)
+    const items = ['Item 1', 'Item 2', 'Item 3']
+    
+    // Use Intl.ListFormat if available (ES2021+)
+    try {
+      // @ts-ignore - ListFormat may not be in all TypeScript versions
+      if (typeof Intl !== 'undefined' && Intl.ListFormat) {
+        // @ts-ignore
+        return new Intl.ListFormat(locale, { style: 'long', type: 'conjunction' }).format(items)
+      }
+    } catch {
+      // Fallback if not supported
+    }
+    
+    // Fallback: simple comma-separated list
+    return items.join(', ')
+  }
+  
   // Updated chart structure to include worksheet information
   interface SavedChart {
     id: string // Unique chart ID (for navigation entry)
@@ -621,6 +704,45 @@ const MinitabLayout = () => {
   const dropdownRef = useRef<HTMLDivElement>(null)
   const dataMenuRef = useRef<HTMLDivElement>(null)
   const graphMenuRef = useRef<HTMLDivElement>(null)
+  const languageDropdownRef = useRef<HTMLDivElement>(null)
+  const regionDropdownRef = useRef<HTMLDivElement>(null)
+  
+  // Close settings dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (languageDropdownRef.current && !languageDropdownRef.current.contains(event.target as Node)) {
+        setShowLanguageDropdown(false)
+      }
+      if (regionDropdownRef.current && !regionDropdownRef.current.contains(event.target as Node)) {
+        setShowRegionDropdown(false)
+      }
+    }
+    
+    if (showLanguageDropdown || showRegionDropdown) {
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showLanguageDropdown, showRegionDropdown])
+  
+  // Handle Escape key to close Settings dialog and dropdowns
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        if (showLanguageDropdown) {
+          setShowLanguageDropdown(false)
+        } else if (showRegionDropdown) {
+          setShowRegionDropdown(false)
+        } else if (showSettings) {
+          setShowSettings(false)
+        }
+      }
+    }
+    
+    if (showSettings) {
+      document.addEventListener('keydown', handleEscape)
+      return () => document.removeEventListener('keydown', handleEscape)
+    }
+  }, [showSettings, showLanguageDropdown, showRegionDropdown])
 
   // Load spreadsheet and cells data when spreadsheet ID is available
   useEffect(() => {
@@ -784,15 +906,10 @@ const MinitabLayout = () => {
             </div>
           </div>
 
-          {/* Right: Help, Settings, User */}
+          {/* Right: Settings, User */}
           <div className="flex items-center gap-2">
-            <button className="p-2 hover:bg-gray-100 rounded" title="Help">
-              <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </button>
-            <Link
-              to="/minitab/profile"
+            <button 
+              onClick={() => setShowSettings(true)}
               className="p-2 hover:bg-gray-100 rounded"
               title="Settings"
             >
@@ -800,7 +917,7 @@ const MinitabLayout = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
-            </Link>
+            </button>
             <Link
               to="/minitab/profile"
               className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-medium hover:bg-blue-700 cursor-pointer"
@@ -2150,6 +2267,162 @@ const MinitabLayout = () => {
           toast.success(`Generated ${chartData.length} I-Chart${chartData.length !== 1 ? 's' : ''}`)
         }}
       />
+
+      {/* Settings Modal */}
+      {showSettings && (
+        <>
+          {/* Backdrop */}
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-30 z-50"
+            onClick={() => setShowSettings(false)}
+          />
+          
+          {/* Settings Dialog */}
+          <div 
+            className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-xl z-50 w-[560px] max-h-[600px] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+              <h2 className="text-lg font-semibold text-gray-900">Settings</h2>
+              <button
+                onClick={() => setShowSettings(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="px-6 py-5">
+              <h3 className="text-base font-semibold text-gray-900 mb-3">Language/Region</h3>
+              <p className="text-sm text-gray-600 mb-6">
+                Date, time, and numeric formats are based on your regional preference.
+              </p>
+
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                {/* Language Dropdown */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Language
+                  </label>
+                  <div className="relative" ref={languageDropdownRef}>
+                    <button
+                      onClick={() => {
+                        setShowLanguageDropdown(!showLanguageDropdown)
+                        setShowRegionDropdown(false)
+                      }}
+                      className="w-full px-3 py-2 text-left bg-white border border-gray-300 rounded text-sm hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 flex items-center justify-between"
+                    >
+                      <span>{language}</span>
+                      <svg className={`w-4 h-4 transition-transform ${showLanguageDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                    
+                    {showLanguageDropdown && (
+                      <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded shadow-lg z-10 max-h-64 overflow-y-auto">
+                        {['English', 'Français', 'Deutsch', 'Português', 'Español', '日本語', '한국어', '中文(简体)'].map((lang) => (
+                          <button
+                            key={lang}
+                            onClick={() => {
+                              setLanguage(lang)
+                              setShowLanguageDropdown(false)
+                            }}
+                            className={`w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2 ${
+                              language === lang ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
+                            }`}
+                          >
+                            {language === lang && (
+                              <svg className="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                              </svg>
+                            )}
+                            <span>{lang}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Region Dropdown */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Region
+                  </label>
+                  <div className="relative" ref={regionDropdownRef}>
+                    <button
+                      onClick={() => {
+                        setShowRegionDropdown(!showRegionDropdown)
+                        setShowLanguageDropdown(false)
+                      }}
+                      className="w-full px-3 py-2 text-left bg-white border border-gray-300 rounded text-sm hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 flex items-center justify-between"
+                    >
+                      <span>{region}</span>
+                      <svg className={`w-4 h-4 transition-transform ${showRegionDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                    
+                    {showRegionDropdown && (
+                      <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded shadow-lg z-10 max-h-64 overflow-y-auto">
+                        {['United States', 'United Kingdom', 'France', 'Germany', 'Brazil', 'Mexico', 'Japan', 'Korea', 'China'].map((reg) => (
+                          <button
+                            key={reg}
+                            onClick={() => {
+                              setRegion(reg)
+                              setShowRegionDropdown(false)
+                            }}
+                            className={`w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2 ${
+                              region === reg ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
+                            }`}
+                          >
+                            {region === reg && (
+                              <svg className="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                              </svg>
+                            )}
+                            <span>{reg}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Format Preview */}
+              <div className="space-y-2 mb-6">
+                <div className="flex items-center text-sm">
+                  <span className="text-gray-600 w-40">Number format:</span>
+                  <span className="text-gray-900 font-medium">{formatNumber(1123.24, region)}</span>
+                </div>
+                <div className="flex items-center text-sm">
+                  <span className="text-gray-600 w-40">Date/time format:</span>
+                  <span className="text-gray-900 font-medium">{formatDateTime(region)}</span>
+                </div>
+                <div className="flex items-center text-sm">
+                  <span className="text-gray-600 w-40">List:</span>
+                  <span className="text-gray-900 font-medium">{formatList(region)}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-4 border-t border-gray-200 flex justify-end">
+              <button
+                onClick={() => setShowSettings(false)}
+                className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors font-medium"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   )
 }
