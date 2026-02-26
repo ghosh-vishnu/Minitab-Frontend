@@ -75,23 +75,63 @@ export interface AuthResponse {
 
 export const authAPI = {
   /**
-   * Login: 1) License Server (company admin) -> sync to Backend.
-   * 2) If License Server 401, try Backend company-user-login (users created by company admin).
+   * Step 1: Verify email and password only (without license key).
+   * Returns success if credentials are valid.
+   */
+  verifyCredentials: async (email: string, password: string): Promise<{
+    valid: boolean
+    user_type: string
+    email: string
+    company_name?: string
+    message: string
+  }> => {
+    const response = await api.post('/auth/verify-credentials/', { email, password })
+    return response.data
+  },
+
+  /**
+   * Login (2-step): use user_type from verify-credentials to choose flow.
+   *
+   * - userType === 'backend'  → direct Backend company-user-login.
+   * - otherwise (license_server / unknown) → try License Server login, and if that
+   *   returns 401 then automatically fall back to Backend company-user-login.
+   *
    * Returns Backend JWT for all subsequent API calls.
    */
-  login: async (credentials: LoginCredentials): Promise<AuthResponse> => {
+  login: async (
+    credentials: LoginCredentials,
+    userType?: string
+  ): Promise<AuthResponse> => {
+    const hasLicenseKey = Boolean(credentials.license_key)
+    const email = credentials.email ?? ''
+    const password = credentials.password ?? ''
+
+    // Company user branch – never hit License Server
+    if (userType === 'backend' && hasLicenseKey) {
+      const backendRes = await api.post<AuthResponse>('/auth/company-user-login/', {
+        email,
+        password,
+        license_key: credentials.license_key,
+      })
+      return backendRes.data
+    }
+
+    // Default / license_server branch – try License Server then fall back to Backend
     try {
-      const lsRes = await licenseServerApi.post<AuthResponse>('/auth/login/', credentials)
-      const lsData = lsRes.data
+      const lsRes = await licenseServerApi.post<AuthResponse>('/auth/login/', {
+        email,
+        password,
+        license_key: credentials.license_key,
+      })
       const backendRes = await api.post<AuthResponse>('/auth/sync-license-session/', {
-        access: lsData.access,
+        access: lsRes.data.access,
       })
       return backendRes.data
     } catch (lsErr: any) {
-      if (lsErr.response?.status === 401 && credentials.email && credentials.license_key) {
+      if (lsErr.response?.status === 401 && hasLicenseKey) {
         const backendRes = await api.post<AuthResponse>('/auth/company-user-login/', {
-          email: credentials.email,
-          password: credentials.password,
+          email,
+          password,
           license_key: credentials.license_key,
         })
         return backendRes.data
