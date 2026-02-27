@@ -18,16 +18,18 @@ import { CompanyAdminRoute, CompanyRoute } from './components/RoleProtectedRoute
 import Layout from './components/Layout'
 import MinitabLayout from './components/MinitabLayout'
 
+import { hasLicenseCheckPassed } from './utils/licenseCheck'
+
 // Smart redirect component that sends users to their appropriate dashboard
 function DashboardRedirect() {
   const { user, isCompanyAdmin, isCompanyUser } = useAuthStore()
 
   if (!user) return <Navigate to="/login" />
-  
-  if (isCompanyAdmin()) return <Navigate to="/company-admin" replace />
+  if (isCompanyAdmin()) {
+    if (!hasLicenseCheckPassed()) return <Navigate to="/license-check" replace />
+    return <Navigate to="/company-admin" replace />
+  }
   if (isCompanyUser()) return <Navigate to="/dashboard" replace />
-  
-  // Fallback
   return <Navigate to="/dashboard" replace />
 }
 

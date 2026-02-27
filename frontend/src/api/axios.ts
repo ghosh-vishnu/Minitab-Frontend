@@ -39,6 +39,7 @@ api.interceptors.request.use(
 const AUTH_ENDPOINTS_401_OK = [
   '/auth/verify-credentials/',
   '/auth/company-user-login/',
+  '/auth/unified-login/',
   '/auth/login/',
   '/auth/sync-license-session/',
   '/auth/register/',

@@ -1,5 +1,6 @@
 import { Navigate, useLocation } from 'react-router-dom'
 import { useAuthStore, UserType } from '../store/authStore'
+import { hasLicenseCheckPassed } from '../utils/licenseCheck'
 
 interface RoleProtectedRouteProps {
   children: React.ReactNode
@@ -24,6 +25,11 @@ export const RoleProtectedRoute: React.FC<RoleProtectedRouteProps> = ({
   // Not authenticated
   if (!isAuthenticated || !user) {
     return <Navigate to="/login" state={{ from: location }} replace />
+  }
+
+  // Company Admin must complete license check before accessing any protected route
+  if (isCompanyAdmin() && !hasLicenseCheckPassed()) {
+    return <Navigate to="/license-check" replace />
   }
 
   // Super admins bypass role restrictions (except explicit super admin only routes)

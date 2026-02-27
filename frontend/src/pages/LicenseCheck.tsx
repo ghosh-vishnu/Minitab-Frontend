@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import api from '../api/axios'
 import { useAuthStore } from '../store/authStore'
+import { setLicenseCheckPassed } from '../utils/licenseCheck'
 import { extractAuthError } from '../api/errorUtils'
 import toast from 'react-hot-toast'
 
@@ -31,8 +32,9 @@ const LicenseCheck = () => {
       })
       if (response.data.company) {
         setCompanyDetail(response.data.company as any)
+        setLicenseCheckPassed()
         toast.success('License activated successfully')
-        navigate('/dashboard')
+        navigate('/company-admin')
       }
     } catch (error) {
       const msg = extractAuthError(error, 'Invalid license key. Please try again.')
@@ -40,11 +42,6 @@ const LicenseCheck = () => {
     } finally {
       setLoading(false)
     }
-  }
-
-  const handleSkip = () => {
-    toast('You can add your license key later from the company profile.', { icon: 'ℹ️' })
-    navigate('/dashboard')
   }
 
   if (!user) {
@@ -60,13 +57,13 @@ const LicenseCheck = () => {
             License Required
           </h2>
           <p className="text-sm text-gray-500 mb-6">
-            Your company account needs a valid license key to access all features. Enter the license key provided by your administrator, or skip to continue with limited access.
+            Your company account requires a valid license key to access the dashboard. Enter the license key provided by your administrator.
           </p>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                License Key
+                License Key *
               </label>
               <input
                 {...register('license_key', { required: 'License key is required' })}
@@ -81,22 +78,13 @@ const LicenseCheck = () => {
               )}
             </div>
 
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={handleSkip}
-                className="flex-1 bg-gray-200 text-gray-700 py-2.5 px-4 rounded-md font-medium hover:bg-gray-300"
-              >
-                Skip for now
-              </button>
-              <button
-                type="submit"
-                disabled={loading}
-                className="flex-1 bg-blue-600 text-white py-2.5 px-4 rounded-md font-medium hover:bg-blue-700 disabled:opacity-50"
-              >
-                {loading ? 'Verifying...' : 'Activate'}
-              </button>
-            </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-blue-600 text-white py-2.5 px-4 rounded-md font-medium hover:bg-blue-700 disabled:opacity-50"
+            >
+              {loading ? 'Verifying...' : 'Activate License'}
+            </button>
           </form>
         </div>
       </div>

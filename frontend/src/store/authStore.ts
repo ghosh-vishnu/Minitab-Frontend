@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
+import { clearLicenseCheckPassed } from '../utils/licenseCheck'
 
 export type UserType = 'SUPER' | 'CHILD' | 'COMPANY_ADMIN' | 'COMPANY_USER'
 
@@ -96,14 +97,16 @@ export const useAuthStore = create<AuthState>()(
           isAuthenticated: true,
         })
       },
-      logout: () =>
+      logout: () => {
+        clearLicenseCheckPassed()
         set({
           user: null,
           accessToken: null,
           refreshToken: null,
           isAuthenticated: false,
           companyDetail: null,
-        }),
+        })
+      },
       updateUser: (user) => set({ user }),
       setCompanyDetail: (company) => set({ companyDetail: company }),
       

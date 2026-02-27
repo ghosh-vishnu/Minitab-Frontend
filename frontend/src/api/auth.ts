@@ -43,7 +43,14 @@ export interface RegisterData {
   last_name?: string
 }
 
-/** Login API response: token + access timing + optional full company. Use access token for Create Company and other APIs. */
+/** Company license status - backend-only validation. */
+export interface CompanyLicenseStatus {
+  active: boolean
+  license_key?: string | null
+  expiration_date?: string | null
+}
+
+/** Login API response: token + role + company_license_status + license_required. */
 export interface AuthResponse {
   user: {
     id: string
@@ -71,9 +78,25 @@ export interface AuthResponse {
   access_expires_at?: string | null
   /** Access token validity in seconds (e.g. 3600 for 1 hour). */
   expires_in?: number | null
+  /** User role (user_type). */
+  role?: string
+  /** Company-level license status. License belongs to Company. */
+  company_license_status?: CompanyLicenseStatus
+  /** True only when Company Admin must verify license. Normal users never get this. */
+  license_required?: boolean
 }
 
 export const authAPI = {
+  /**
+   * Single-step login: email + password only. No license key.
+   * Returns token, role, company_license_status, license_required.
+   * Normal users go to dashboard. Company Admin without license gets license_required → redirect to license-check.
+   */
+  unifiedLogin: async (email: string, password: string): Promise<AuthResponse> => {
+    const response = await api.post<AuthResponse>('/auth/unified-login/', { email, password })
+    return response.data
+  },
+
   /**
    * Step 1: Verify email and password only (without license key).
    * Returns success if credentials are valid.
@@ -90,13 +113,9 @@ export const authAPI = {
   },
 
   /**
-   * Login (2-step): use user_type from verify-credentials to choose flow.
-   *
-   * - userType === 'backend'  → direct Backend company-user-login.
-   * - otherwise (license_server / unknown) → try License Server login, and if that
-   *   returns 401 then automatically fall back to Backend company-user-login.
-   *
-   * Returns Backend JWT for all subsequent API calls.
+   * Login (2-step, legacy): use user_type from verify-credentials to choose flow.
+   * Prefer unifiedLogin for single-step flow.
+   * Company users: email+password only, no license_key.
    */
   login: async (
     credentials: LoginCredentials,
@@ -106,33 +125,32 @@ export const authAPI = {
     const email = credentials.email ?? ''
     const password = credentials.password ?? ''
 
-    // Company user branch – never hit License Server
-    if (userType === 'backend' && hasLicenseKey) {
+    // Backend company users: email+password only (no license_key required)
+    if (userType === 'backend') {
       const backendRes = await api.post<AuthResponse>('/auth/company-user-login/', {
         email,
         password,
-        license_key: credentials.license_key,
+        ...(hasLicenseKey && { license_key: credentials.license_key }),
       })
       return backendRes.data
     }
 
-    // Default / license_server branch – try License Server then fall back to Backend
+    // License Server branch – try License Server (credentials only)
     try {
       const lsRes = await licenseServerApi.post<AuthResponse>('/auth/login/', {
         email,
         password,
-        license_key: credentials.license_key,
+        ...(hasLicenseKey && { license_key: credentials.license_key }),
       })
       const backendRes = await api.post<AuthResponse>('/auth/sync-license-session/', {
         access: lsRes.data.access,
       })
       return backendRes.data
     } catch (lsErr: any) {
-      if (lsErr.response?.status === 401 && hasLicenseKey) {
+      if (lsErr.response?.status === 401) {
         const backendRes = await api.post<AuthResponse>('/auth/company-user-login/', {
           email,
           password,
-          license_key: credentials.license_key,
         })
         return backendRes.data
       }
