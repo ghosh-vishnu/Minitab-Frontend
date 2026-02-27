@@ -4,6 +4,7 @@ import { useAuthStore } from './store/authStore'
 import { ModalProvider } from './context/ModalContext'
 import Login from './pages/Login'
 import Register from './pages/Register'
+import LicenseCheck from './pages/LicenseCheck'
 import Dashboard from './pages/Dashboard'
 import CompanyAdminDashboard from './pages/CompanyAdminDashboard'
 import CompanyAdminProfile from './pages/CompanyAdminProfile'
@@ -46,6 +47,10 @@ function App() {
           <Route
             path="/register"
             element={isAuthenticated ? <DashboardRedirect /> : <Register />}
+          />
+          <Route
+            path="/license-check"
+            element={isAuthenticated ? <LicenseCheck /> : <Navigate to="/login" />}
           />
 
           {/* Company Admin Routes */}

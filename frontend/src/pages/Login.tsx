@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { useAuthStore } from '../store/authStore'
 import { authAPI } from '../api/auth'
+import { extractAuthError } from '../api/errorUtils'
 import toast from 'react-hot-toast'
 
 interface CredentialsForm {
@@ -20,8 +21,11 @@ const Login = () => {
   const [loading, setLoading] = useState(false)
   const [suspendedMessage, setSuspendedMessage] = useState<string | null>(null)
   const [showLicenseKeyModal, setShowLicenseKeyModal] = useState(false)
-  const [verifiedCredentials, setVerifiedCredentials] = useState<{ email: string; password: string } | null>(null)
-  const [verifiedUserType, setVerifiedUserType] = useState<string | null>(null)
+  const [verifiedCredentials, setVerifiedCredentials] = useState<{
+    email: string
+    password: string
+    user_type: string
+  } | null>(null)
 
   const {
     register: registerCredentials,
@@ -46,27 +50,15 @@ const Login = () => {
         setVerifiedCredentials({
           email: data.email.trim(),
           password: data.password,
+          user_type: response.user_type || 'license_server',
         })
-        setVerifiedUserType(response.user_type ?? null)
         setShowLicenseKeyModal(true)
         toast.success(response.message || 'Credentials verified')
       }
     } catch (error: any) {
       console.error('Credentials verification error:', error)
 
-      const errorData = error.response?.data
-      let msg = 'Invalid email or password'
-
-      if (typeof errorData === 'string') {
-        msg = errorData
-      } else if (errorData?.error) {
-        msg = errorData.error
-      } else if (errorData?.detail) {
-        msg = Array.isArray(errorData.detail) ? errorData.detail[0] : errorData.detail
-      } else if (errorData?.message) {
-        msg = errorData.message
-      }
-
+      const msg = extractAuthError(error, 'Invalid email or password')
       if (msg.toLowerCase().includes('suspended')) {
         setSuspendedMessage(msg)
       } else {
@@ -80,41 +72,37 @@ const Login = () => {
   const onSubmitLicenseKey = async (data: LicenseKeyForm) => {
     if (!verifiedCredentials) return
 
+    const licenseKey = data.license_key?.trim() || ''
+    const isBackendUser = verifiedCredentials.user_type === 'backend'
+    if (isBackendUser && !licenseKey) {
+      toast.error('License key is required for company users.')
+      return
+    }
+
     setLoading(true)
 
     try {
-      const loginData = {
+      const loginData: any = {
         email: verifiedCredentials.email,
         password: verifiedCredentials.password,
-        license_key: data.license_key.trim(),
+        ...(licenseKey && { license_key: licenseKey }),
       }
 
-      const response = await authAPI.login(loginData, verifiedUserType ?? undefined)
+      const response = await authAPI.login(loginData, verifiedCredentials.user_type)
 
       setAuth(response.user, response.access, response.refresh)
       if (response.company) setCompanyDetail(response.company)
       toast.success('Logged in successfully')
-      navigate('/dashboard')
+      if (response.company?.license_required) {
+        navigate('/license-check')
+      } else {
+        navigate('/dashboard')
+      }
 
     } catch (error: any) {
       console.error('License key verification error:', error)
 
-      const errorData = error.response?.data
-      let msg = 'Invalid license key'
-
-      if (typeof errorData === 'string') {
-        msg = errorData
-      } else if (errorData?.non_field_errors?.length) {
-        msg = errorData.non_field_errors[0]
-      } else if (Array.isArray(errorData?.detail)) {
-        msg = errorData.detail[0] || msg
-      } else if (typeof errorData?.detail === 'string') {
-        msg = errorData.detail
-      } else if (errorData?.error) {
-        msg = errorData.error
-      } else if (errorData?.message) {
-        msg = errorData.message
-      }
+      const msg = extractAuthError(error, 'Invalid license key or credentials')
 
       if (msg.toLowerCase().includes('suspended')) {
         setSuspendedMessage(msg)
@@ -132,7 +120,6 @@ const Login = () => {
   const closeLicenseKeyModal = () => {
     setShowLicenseKeyModal(false)
     setVerifiedCredentials(null)
-    setVerifiedUserType(null)
     resetLicense()
   }
 
@@ -198,18 +185,16 @@ const Login = () => {
             </div>
 
             <p className="text-sm text-gray-600 mb-4">
-              Email verified successfully. Please enter your license key to complete login.
+              Email verified successfully. Enter your license key to complete login, or continue if you need to add one later.
             </p>
 
             <form onSubmit={handleSubmitLicense(onSubmitLicenseKey)} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  License Key *
+                  License Key
                 </label>
                 <input
-                  {...registerLicense('license_key', {
-                    required: 'License key is required.',
-                  })}
+                  {...registerLicense('license_key')}
                   type="text"
                   className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="Enter your license key"
@@ -266,6 +251,7 @@ const Login = () => {
                   required: 'Email is required',
                 })}
                 type="email"
+                autoComplete="email"
                 className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="company@example.com"
               />
@@ -286,6 +272,7 @@ const Login = () => {
                   required: 'Password is required',
                 })}
                 type="password"
+                autoComplete="current-password"
                 className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="Enter your password"
               />
