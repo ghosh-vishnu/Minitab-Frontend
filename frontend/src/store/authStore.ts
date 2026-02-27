@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import { clearLicenseCheckPassed } from '../utils/licenseCheck'
+import { clearSecureAuth } from '../utils/secureStorage'
 
 export type UserType = 'SUPER' | 'CHILD' | 'COMPANY_ADMIN' | 'COMPANY_USER'
 
@@ -99,6 +100,7 @@ export const useAuthStore = create<AuthState>()(
       },
       logout: () => {
         clearLicenseCheckPassed()
+        clearSecureAuth()
         set({
           user: null,
           accessToken: null,
@@ -153,7 +155,7 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'auth-storage',
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(() => sessionStorage),
       migrate: (persistedState: any, _version: number) => {
         // Handle migration of old user types
         if (persistedState?.user?.user_type === 'CHILD') {

@@ -19,6 +19,7 @@ import Layout from './components/Layout'
 import MinitabLayout from './components/MinitabLayout'
 
 import { hasLicenseCheckPassed } from './utils/licenseCheck'
+import { useProactiveTokenRefresh } from './hooks/useProactiveTokenRefresh'
 
 // Smart redirect component that sends users to their appropriate dashboard
 function DashboardRedirect() {
@@ -35,6 +36,7 @@ function DashboardRedirect() {
 
 function App() {
   const { isAuthenticated } = useAuthStore()
+  useProactiveTokenRefresh()
 
   return (
     <Router>

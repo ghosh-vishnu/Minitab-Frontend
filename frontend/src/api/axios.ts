@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { useAuthStore } from '../store/authStore'
+import toast from 'react-hot-toast'
 
 // Use environment variable or default to localhost:8000
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api'
@@ -18,17 +19,15 @@ api.interceptors.request.use(
     if (accessToken) {
       config.headers.Authorization = `Bearer ${accessToken}`
     }
-    
+
     // Don't force Content-Type for FormData - let browser set it with boundary
     if (config.data instanceof FormData) {
       delete config.headers['Content-Type']
     }
-    
+
     return config
   },
-  (error) => {
-    return Promise.reject(error)
-  }
+  (error) => Promise.reject(error)
 )
 
 /**
@@ -54,20 +53,30 @@ function isAuthCredentialRequest(config: { url?: string; baseURL?: string }): bo
   return AUTH_ENDPOINTS_401_OK.some((endpoint) => fullPath.endsWith(endpoint) || fullPath.includes(endpoint))
 }
 
-// Response interceptor to handle token refresh
+/** Global error handler for 403 Forbidden */
+function handle403(): void {
+  toast.error('You do not have permission to perform this action.')
+}
+
+// Response interceptor: token refresh, global 401/403 handling
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config
+    const status = error.response?.status
 
     // Skip 401 handling for auth endpoints: wrong password returns 401, not expired token.
-    // Running refresh/redirect here causes page reload instead of showing error toast.
     if (isAuthCredentialRequest(originalRequest)) {
       return Promise.reject(error)
     }
 
-    // Only retry on 401 (token expired) for authenticated API calls
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Global 403 handler (caller can still handle if needed)
+    if (status === 403) {
+      handle403()
+    }
+
+    // 401: token expired – attempt refresh
+    if (status === 401 && !originalRequest._retry) {
       originalRequest._retry = true
 
       const { refreshToken, logout } = useAuthStore.getState()
@@ -87,10 +96,10 @@ api.interceptors.response.use(
 
           originalRequest.headers.Authorization = `Bearer ${access}`
           return api(originalRequest)
-        } catch (refreshError) {
+        } catch {
           logout()
           window.location.href = '/login'
-          return Promise.reject(refreshError)
+          return Promise.reject(error)
         }
       } else {
         logout()
