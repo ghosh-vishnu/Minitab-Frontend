@@ -90,9 +90,10 @@ export default function CompanyAdminProfile() {
               </div>
             </div>
 
-            {/* Company */}
+            {/* Company Information */}
             <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-lg font-bold text-gray-900 mb-4">Company</h2>
+              <h2 className="text-lg font-bold text-gray-900 mb-4">Company Information</h2>
+              <p className="text-sm text-gray-500 mb-4">Details defined by your administrator.</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-500">Company Name</label>
@@ -102,10 +103,38 @@ export default function CompanyAdminProfile() {
                   <label className="block text-sm font-medium text-gray-500">Company Code</label>
                   <p className="mt-1 font-mono text-gray-900">{company.company_code}</p>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-500">Licence Key</label>
-                  <p className="mt-1 font-mono text-gray-900">{company.license_key || '—'}</p>
-                </div>
+                {company.email && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500">Email</label>
+                    <p className="mt-1 text-gray-900">{company.email}</p>
+                  </div>
+                )}
+                {company.phone && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500">Phone</label>
+                    <p className="mt-1 text-gray-900">{company.phone}</p>
+                  </div>
+                )}
+                {(company.address || company.address_line1) && (
+                  <div className="sm:col-span-2">
+                    <label className="block text-sm font-medium text-gray-500">Address</label>
+                    <p className="mt-1 text-gray-900">{company.address || company.address_line1}</p>
+                  </div>
+                )}
+                {(company.city || company.state || company.country) && (
+                  <div className="sm:col-span-2">
+                    <label className="block text-sm font-medium text-gray-500">Location</label>
+                    <p className="mt-1 text-gray-900">
+                      {[company.city, company.state, company.country].filter(Boolean).join(', ') || '—'}
+                    </p>
+                  </div>
+                )}
+                {company.GST_NO && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500">GST No / Tax ID</label>
+                    <p className="mt-1 font-mono text-gray-900">{company.GST_NO}</p>
+                  </div>
+                )}
                 <div>
                   <label className="block text-sm font-medium text-gray-500">Status</label>
                   <p className="mt-1">
@@ -116,6 +145,22 @@ export default function CompanyAdminProfile() {
                     </span>
                   </p>
                 </div>
+              </div>
+            </div>
+
+            {/* License Information */}
+            <div className="bg-white rounded-lg shadow p-6">
+              <h2 className="text-lg font-bold text-gray-900 mb-4">License Information</h2>
+              <p className="text-sm text-gray-500 mb-4">License details as configured by Super Admin.</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-500">License Key</label>
+                  <p className="mt-1 font-mono text-gray-900">{company.license_key || '—'}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-500">Product</label>
+                  <p className="mt-1 text-gray-900">{company.license_product_name || 'Minitab'}</p>
+                </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-500">User Access</label>
                   <p className="mt-1 text-gray-900">
@@ -123,9 +168,19 @@ export default function CompanyAdminProfile() {
                     <span className="text-gray-500 text-sm ml-1">(active / licensed)</span>
                   </p>
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-500">License Status</label>
+                  <p className="mt-1">
+                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                      (company.license_status || company.status) === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                    }`}>
+                      {company.license_status || company.status || '—'}
+                    </span>
+                  </p>
+                </div>
                 {company.license_expiration_date && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-500">Licence Expiry</label>
+                    <label className="block text-sm font-medium text-gray-500">License Expiry</label>
                     <p className="mt-1 text-gray-900">
                       {new Date(company.license_expiration_date).toLocaleDateString(undefined, {
                         day: 'numeric',
@@ -133,6 +188,38 @@ export default function CompanyAdminProfile() {
                         year: 'numeric',
                       })}
                     </p>
+                  </div>
+                )}
+                {company.license_purchase_date && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500">Purchase Date</label>
+                    <p className="mt-1 text-gray-900">
+                      {new Date(company.license_purchase_date).toLocaleDateString(undefined, {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric',
+                      })}
+                    </p>
+                  </div>
+                )}
+                {company.license_location && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500">License Location</label>
+                    <p className="mt-1 text-gray-900">{company.license_location}</p>
+                  </div>
+                )}
+                {company.license_role_limits && (
+                  <div className="sm:col-span-2">
+                    <label className="block text-sm font-medium text-gray-500">Role Allocation</label>
+                    <p className="mt-1 text-gray-900">
+                      Super Admins: {company.license_role_limits.max_super_admins ?? 0}, Company Admins: {company.license_role_limits.max_company_admins ?? 0}, Users: {company.license_role_limits.max_users ?? 0}
+                    </p>
+                  </div>
+                )}
+                {company.license_description && (
+                  <div className="sm:col-span-2">
+                    <label className="block text-sm font-medium text-gray-500">Description</label>
+                    <p className="mt-1 text-gray-900">{company.license_description}</p>
                   </div>
                 )}
               </div>

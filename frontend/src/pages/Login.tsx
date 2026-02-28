@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { useAuthStore } from '../store/authStore'
 import { authAPI } from '../api/auth'
+import { setLicenseCheckPassed } from '../utils/licenseCheck'
 import toast from 'react-hot-toast'
 
 interface CredentialsForm {
@@ -42,13 +43,32 @@ const Login = () => {
       const response = await authAPI.verifyCredentials(data.email.trim(), data.password)
       
       if (response.valid) {
-        // Store credentials and show license key modal
-        setVerifiedCredentials({
-          email: data.email.trim(),
-          password: data.password,
-        })
-        setShowLicenseKeyModal(true)
-        toast.success(response.message || 'Credentials verified')
+        // Check if license key is required
+        if (response.requires_license_key === false) {
+          // Company user - login directly without license key
+          try {
+            const loginResponse = await authAPI.companyUserLogin(data.email.trim(), data.password)
+            setAuth(loginResponse.user, loginResponse.access, loginResponse.refresh)
+            if (loginResponse.company) setCompanyDetail(loginResponse.company)
+            setLicenseCheckPassed()
+            toast.success('Logged in successfully')
+            navigate('/dashboard')
+          } catch (loginError: any) {
+            const errorData = loginError.response?.data
+            let msg = 'Login failed'
+            if (errorData?.error) msg = errorData.error
+            else if (errorData?.detail) msg = errorData.detail
+            toast.error(msg)
+          }
+        } else {
+          // Company Admin - show license key modal
+          setVerifiedCredentials({
+            email: data.email.trim(),
+            password: data.password,
+          })
+          setShowLicenseKeyModal(true)
+          toast.success(response.message || 'Please enter your license key')
+        }
       }
     } catch (error: any) {
       console.error('Credentials verification error:', error)
@@ -92,6 +112,7 @@ const Login = () => {
 
       setAuth(response.user, response.access, response.refresh)
       if (response.company) setCompanyDetail(response.company)
+      setLicenseCheckPassed()
       toast.success('Logged in successfully')
       navigate('/dashboard')
 

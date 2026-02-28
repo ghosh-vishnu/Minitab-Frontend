@@ -182,7 +182,6 @@ const StatMenu = () => {
   }
 
   const handleItemClick = (itemLabel: string) => {
-    console.log('Selected:', itemLabel)
     try {
       const event = new CustomEvent('stat-menu-select', { detail: { label: itemLabel } })
       document.dispatchEvent(event)

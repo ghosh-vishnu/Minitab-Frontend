@@ -10,6 +10,18 @@ export interface Company {
   total_user_access?: number | null
   /** License expiration date (ISO string). */
   license_expiration_date?: string | null
+  /** Product name from license (e.g. Minitab). */
+  license_product_name?: string | null
+  /** License purchase date (ISO string). */
+  license_purchase_date?: string | null
+  /** License location/region. */
+  license_location?: string | null
+  /** License description/notes. */
+  license_description?: string | null
+  /** License status (active, disabled, etc). */
+  license_status?: string | null
+  /** Role limits: max_super_admins, max_company_admins, max_users. */
+  license_role_limits?: { max_super_admins?: number; max_company_admins?: number; max_users?: number } | null
   /** Company license / business ID (GST No, CIN). Not a system-generated license key. */
   GST_NO?: string | null
   email: string

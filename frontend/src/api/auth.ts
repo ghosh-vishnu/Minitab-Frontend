@@ -100,15 +100,29 @@ export const authAPI = {
   /**
    * Step 1: Verify email and password only (without license key).
    * Returns success if credentials are valid.
+   * For backend company users, requires_license_key will be false.
    */
   verifyCredentials: async (email: string, password: string): Promise<{
     valid: boolean
     user_type: string
+    requires_license_key: boolean
     email: string
     company_name?: string
     message: string
   }> => {
     const response = await api.post('/auth/verify-credentials/', { email, password })
+    return response.data
+  },
+
+  /**
+   * Login for company users (no license key needed).
+   * Called when requires_license_key is false.
+   */
+  companyUserLogin: async (email: string, password: string): Promise<AuthResponse> => {
+    const response = await api.post<AuthResponse>('/auth/company-user-login/', {
+      email,
+      password,
+    })
     return response.data
   },
 

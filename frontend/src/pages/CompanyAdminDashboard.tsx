@@ -50,7 +50,9 @@ export default function CompanyAdminDashboard() {
 
       const [usersRes, rolesRes, statsRes, companyRes, modulesRes] = await Promise.all([
         usersAPI.listCompanyUsers({ ordering: '-date_joined' }),
-        rbacAPI.getRoles().then(roles => ({ results: roles.filter(r => r.scope === 'company') })),
+        rbacAPI.getRoles().then(roles => ({
+          results: Array.isArray(roles) ? roles.filter(r => r.scope === 'company' || !r.scope) : [],
+        })),
         user?.company ? companiesAPI.getCompanyStats() : Promise.resolve(null),
         user?.company ? companiesAPI.getMyCompany().catch(() => null) : Promise.resolve(null),
         companiesAPI.getProductModules().catch(() => []),
@@ -435,6 +437,7 @@ export default function CompanyAdminDashboard() {
       {showCreateModal && (
         <CreateUserModal
           roles={roles}
+          company={company}
           onClose={() => setShowCreateModal(false)}
           onSubmit={handleCreateUser}
         />
@@ -455,13 +458,18 @@ export default function CompanyAdminDashboard() {
   )
 }
 
-// Create User Modal Component
+// Assignable roles: Admin = full access, User = normal access. Maps to license role limits.
+const ADMIN_ROLE_NAMES = ['Admin', 'Company Admin']
+const USER_ROLE_NAMES = ['Editor', 'User', 'Viewer']
+
 function CreateUserModal({
   roles,
+  company,
   onClose,
   onSubmit,
 }: {
   roles: Role[]
+  company: Company | null
   onClose: () => void
   onSubmit: (data: CreateUserData) => Promise<void>
 }) {
@@ -476,6 +484,18 @@ function CreateUserModal({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  const adminRole = roles.find(r => ADMIN_ROLE_NAMES.some(n => r.name.toLowerCase() === n.toLowerCase()))
+  const userRole = roles.find(r => USER_ROLE_NAMES.some(n => r.name.toLowerCase() === n.toLowerCase()))
+
+  const assignableOptions = [
+    adminRole && { value: adminRole.id, label: 'Admin', desc: 'Full administrative access – user management, roles, settings' },
+    userRole && { value: userRole.id, label: 'User', desc: 'Normal user access – spreadsheets, analysis' },
+  ].filter(Boolean) as { value: string; label: string; desc: string }[]
+
+  const limits = company?.license_role_limits
+  const maxAdmins = limits?.max_company_admins ?? 9
+  const maxUsers = limits?.max_users ?? 10
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
@@ -487,15 +507,6 @@ function CreateUserModal({
     } finally {
       setLoading(false)
     }
-  }
-
-  const toggleRole = (roleId: string) => {
-    setFormData(prev => ({
-      ...prev,
-      role_ids: prev.role_ids?.includes(roleId)
-        ? prev.role_ids.filter(id => id !== roleId)
-        : [...(prev.role_ids || []), roleId]
-    }))
   }
 
   return (
@@ -569,25 +580,31 @@ function CreateUserModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Assign Roles</label>
-            <div className="space-y-2 max-h-48 overflow-y-auto border border-gray-300 rounded-lg p-4">
-              {roles.map((role) => (
-                <label key={role.id} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
-                  <input
-                    type="checkbox"
-                    checked={formData.role_ids?.includes(role.id)}
-                    onChange={() => toggleRole(role.id)}
-                    className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
-                  />
-                  <div>
-                    <div className="text-sm font-medium text-gray-900">{role.name}</div>
-                    {role.description && (
-                      <div className="text-xs text-gray-500">{role.description}</div>
-                    )}
-                  </div>
-                </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Assign Role</label>
+            <select
+              value={formData.role_ids?.[0] ?? ''}
+              onChange={(e) => {
+                const v = e.target.value
+                setFormData((prev) => ({
+                  ...prev,
+                  role_ids: v ? [v] : [],
+                }))
+              }}
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+            >
+              <option value="">Select Admin or User</option>
+              {assignableOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label} — {opt.desc}
+                </option>
               ))}
-            </div>
+            </select>
+            <p className="mt-1 text-xs text-gray-500">
+              License limits: {maxAdmins} Admin{maxAdmins !== 1 ? 's' : ''}, {maxUsers} User{maxUsers !== 1 ? 's' : ''}
+            </p>
+            {assignableOptions.length === 0 && (
+              <p className="mt-1 text-xs text-amber-600">Admin/Editor roles not found. Run init_rbac.</p>
+            )}
           </div>
 
           <div className="flex items-center justify-end gap-4 pt-4 border-t border-gray-200">

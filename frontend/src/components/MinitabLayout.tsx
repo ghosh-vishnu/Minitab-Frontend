@@ -807,9 +807,8 @@ const MinitabLayout = () => {
         try {
           const cellsData = await spreadsheetsAPI.getCells(spreadsheetId)
           setCells(cellsData || [])
-          console.log('[DEBUG] Refreshed cells for Individuals Chart:', cellsData?.length || 0, 'cells')
         } catch (error: any) {
-          console.warn('Failed to refresh cells for chart:', error)
+          // Failed to refresh cells for chart
         }
       }
       refreshCells()
@@ -2021,9 +2020,6 @@ const MinitabLayout = () => {
           setSelectedChartId(null)
         }}
         onGenerateCharts={(chartData, selectionInfo, scaleConfig, labelsConfig, multipleGraphsConfig) => {
-          // Debug: Log labelsConfig to verify it's being received
-          console.log('[MinitabLayout] Received labelsConfig:', labelsConfig)
-          
           // Check if we're editing an existing group
           if (editingChartGroupId) {
             // Find the existing group
@@ -2112,7 +2108,6 @@ const MinitabLayout = () => {
                 closeModal()
                 
                 toast.success('Chart updated in group successfully!')
-                console.log('[MinitabLayout] Updated existing group:', updatedGroup)
                 return // Exit early, don't create a new chart
               } else {
                 // This is a single chart - update it directly

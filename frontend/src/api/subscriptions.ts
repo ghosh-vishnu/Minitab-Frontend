@@ -15,6 +15,9 @@ import type {
   SubscriptionHistory,
 } from '../types/subscription'
 
+// Re-export types for easier imports
+export type { Subscription, SubscriptionPlan, SubscriptionHistory } from '../types/subscription'
+
 export interface ListSubscriptionsParams {
   company?: string
   plan?: string
@@ -56,6 +59,15 @@ export const subscriptionsAPI = {
    */
   getActiveSubscription: async (): Promise<Subscription> => {
     const response = await api.get<Subscription>('/subscriptions/active/')
+    return response.data
+  },
+
+  /**
+   * Refresh subscription data from License Server
+   * Fetches latest license data and updates backend storage
+   */
+  refreshSubscription: async (): Promise<Subscription> => {
+    const response = await api.post<Subscription>('/subscriptions/refresh/')
     return response.data
   },
 

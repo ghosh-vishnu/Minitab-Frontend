@@ -192,7 +192,6 @@ const SpreadsheetGrid = ({
 
       // If there's already a pending update for this cell, skip
       if (pendingUpdatesRef.current.has(cellKey)) {
-        console.log(`Skipping duplicate update for cell ${cellKey}`)
         return
       }
 

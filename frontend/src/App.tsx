@@ -18,6 +18,16 @@ import { CompanyAdminRoute, CompanyRoute } from './components/RoleProtectedRoute
 import Layout from './components/Layout'
 import MinitabLayout from './components/MinitabLayout'
 
+// New Company Admin Layout and Pages
+import CompanyAdminLayout from './components/CompanyAdminLayout'
+import AdminDashboard from './pages/company-admin/Dashboard'
+import UserManagement from './pages/company-admin/UserManagement'
+import RolesManagement from './pages/company-admin/RolesManagement'
+import AdminSpreadsheets from './pages/company-admin/Spreadsheets'
+import AnalysisList from './pages/company-admin/Analysis'
+import CompanyProfile from './pages/company-admin/CompanyProfile'
+import AdminSubscription from './pages/company-admin/Subscription'
+
 import { hasLicenseCheckPassed } from './utils/licenseCheck'
 import { useProactiveTokenRefresh } from './hooks/useProactiveTokenRefresh'
 
@@ -57,22 +67,30 @@ function App() {
             element={isAuthenticated ? <LicenseCheck /> : <Navigate to="/login" />}
           />
 
-          {/* Company Admin Routes */}
+          {/* Company Admin Routes - New Sidebar Layout */}
           <Route
             path="/company-admin"
             element={
               <CompanyAdminRoute>
-                <CompanyAdminDashboard />
+                <CompanyAdminLayout />
               </CompanyAdminRoute>
             }
-          />
+          >
+            <Route index element={<AdminDashboard />} />
+            <Route path="users" element={<UserManagement />} />
+            <Route path="roles" element={<RolesManagement />} />
+            <Route path="spreadsheets" element={<AdminSpreadsheets />} />
+            <Route path="spreadsheet/:id" element={<SpreadsheetView />} />
+            <Route path="analysis" element={<AnalysisList />} />
+            <Route path="company" element={<CompanyProfile />} />
+            <Route path="subscription" element={<AdminSubscription />} />
+            <Route path="profile" element={<Profile />} />
+          </Route>
+
+          {/* Legacy Company Admin Profile Route - redirect to new */}
           <Route
-            path="/company-admin/profile"
-            element={
-              <CompanyAdminRoute>
-                <CompanyAdminProfile />
-              </CompanyAdminRoute>
-            }
+            path="/company-admin-legacy"
+            element={<Navigate to="/company-admin" replace />}
           />
 
           {/* Company User Routes (both admin and regular users) */}

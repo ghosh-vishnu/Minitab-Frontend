@@ -70,16 +70,12 @@ const Subscriptions: React.FC = () => {
 
   const handleSelectPlan = async (planId: string) => {
     try {
-      // Here you would typically show a confirmation dialog or payment flow
-      console.log('Selected plan:', planId)
-      
-      // For now, just show an alert
+      // Show a confirmation dialog or payment flow
       alert('Plan selection feature will be implemented with payment integration')
       
       // Navigate to payment or confirmation flow
       // navigate(`/subscriptions/checkout/${planId}`)
     } catch (err: any) {
-      console.error('Error selecting plan:', err)
       alert(err.response?.data?.message || 'Failed to select plan')
     }
   }

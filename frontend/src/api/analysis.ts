@@ -20,10 +20,21 @@ export interface PerformAnalysisData {
   parameters?: Record<string, any>
 }
 
+interface PaginatedResponse<T> {
+  count: number
+  next: string | null
+  previous: string | null
+  results: T[]
+}
+
 export const analysisAPI = {
   list: async (): Promise<Analysis[]> => {
-    const response = await api.get<Analysis[]>('/analysis/')
-    return response.data
+    const response = await api.get<PaginatedResponse<Analysis> | Analysis[]>('/analysis/')
+    // Handle both paginated and non-paginated responses
+    if (Array.isArray(response.data)) {
+      return response.data
+    }
+    return response.data.results || []
   },
 
   get: async (id: string): Promise<Analysis> => {

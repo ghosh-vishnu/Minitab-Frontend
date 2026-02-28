@@ -37,26 +37,18 @@ const SpreadsheetView = () => {
 
     try {
       setLoading(true)
-      console.log('[DEBUG] Loading spreadsheet with ID:', id)
-      
       const spreadsheetData = await spreadsheetsAPI.get(id)
-      console.log('[DEBUG] Spreadsheet data:', spreadsheetData)
       setSpreadsheet(spreadsheetData)
 
       // Load worksheets
-      console.log('[DEBUG] Fetching worksheets...')
       const worksheetsData = await spreadsheetsAPI.getWorksheets(id)
-      console.log('[DEBUG] Worksheets data:', worksheetsData)
-      console.log('[DEBUG] Number of worksheets:', worksheetsData.length)
       setWorksheets(worksheetsData)
 
       // Set the first active worksheet or the marked active one
       const activeWs = worksheetsData.find((ws) => ws.is_active) || worksheetsData[0]
-      console.log('[DEBUG] Active worksheet:', activeWs)
       if (activeWs) {
         setActiveWorksheet(activeWs)
         const worksheetCells = await spreadsheetsAPI.getWorksheetCells(id, activeWs.id)
-        console.log('[DEBUG] Worksheet cells:', worksheetCells)
         setCells(worksheetCells)
       }
     } catch (error: any) {
@@ -104,29 +96,21 @@ const SpreadsheetView = () => {
     if (!id) throw new Error('Spreadsheet ID is required')
 
     try {
-      console.log('[DEBUG] Creating worksheet with name:', name)
       const newWorksheet = await spreadsheetsAPI.createWorksheet(id, name)
-      console.log('[DEBUG] New worksheet created:', newWorksheet)
       
       // Activate the new worksheet on backend
-      console.log('[DEBUG] Activating worksheet on backend...')
       await spreadsheetsAPI.setActiveWorksheet(id, newWorksheet.id)
-      console.log('[DEBUG] Worksheet activated')
       
       // Fetch fresh worksheets list from server to ensure consistency
-      console.log('[DEBUG] Refreshing worksheets list from server...')
       const refreshedWorksheets = await spreadsheetsAPI.getWorksheets(id)
-      console.log('[DEBUG] Refreshed worksheets:', refreshedWorksheets)
       setWorksheets(refreshedWorksheets)
       
       // Set the newly created one as active
       const activeWs = refreshedWorksheets.find((ws) => ws.id === newWorksheet.id) || newWorksheet
-      console.log('[DEBUG] Setting active worksheet:', activeWs)
       setActiveWorksheet({ ...activeWs, is_active: true })
       setCells([]) // Clear cells for the new empty worksheet
       
       toast.success(`Sheet '${name}' created`)
-      console.log('[DEBUG] Sheet creation complete')
       return activeWs
     } catch (error: any) {
       console.error('[ERROR] Failed to create worksheet:', error)
