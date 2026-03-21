@@ -3,7 +3,7 @@
  * Features: Add sheet, rename sheet, delete sheet, switch sheets
  */
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import toast from 'react-hot-toast'
 
 export interface Worksheet {
@@ -23,6 +23,8 @@ interface SheetTabsProps {
   onAddWorksheet: (name: string) => Promise<Worksheet>
   onRenameWorksheet: (worksheetId: string, newName: string) => Promise<void>
   onDeleteWorksheet: (worksheetId: string) => Promise<void>
+  rowCount?: number
+  columnCount?: number
 }
 
 const SheetTabs = ({
@@ -33,20 +35,43 @@ const SheetTabs = ({
   onAddWorksheet,
   onRenameWorksheet,
   onDeleteWorksheet,
+  rowCount,
+  columnCount,
 }: SheetTabsProps) => {
   const [isRenaming, setIsRenaming] = useState<string | null>(null)
   const [newName, setNewName] = useState('')
   const [showContextMenu, setShowContextMenu] = useState<{ worksheetId: string; x: number; y: number } | null>(null)
 
+  useEffect(() => {
+    if (!showContextMenu) return
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setShowContextMenu(null)
+    }
+    const handleResize = () => setShowContextMenu(null)
+    window.addEventListener('keydown', handleEscape)
+    window.addEventListener('resize', handleResize)
+    return () => {
+      window.removeEventListener('keydown', handleEscape)
+      window.removeEventListener('resize', handleResize)
+    }
+  }, [showContextMenu])
+
   const handleAddSheet = async () => {
-    const sheetNumber = worksheets.length + 1
-    const defaultName = `Sheet${sheetNumber}`
-    
+    const sheetMatch = /^Sheet(\d+)$/i
+    const numbers = worksheets
+      .map((ws) => {
+        const m = ws.name.match(sheetMatch)
+        return m ? parseInt(m[1], 10) : 0
+      })
+      .filter((n) => n > 0)
+    const maxNum = numbers.length > 0 ? Math.max(...numbers) : 0
+    const defaultName = `Sheet${maxNum + 1}`
+
     try {
       await onAddWorksheet(defaultName)
-      // onAddWorksheet already handles the toast and selection
-    } catch (error) {
-      toast.error('Failed to create sheet')
+    } catch (error: any) {
+      const msg = error?.response?.data?.error || 'Failed to create sheet'
+      toast.error(msg)
       console.error(error)
     }
   }
@@ -98,22 +123,42 @@ const SheetTabs = ({
     [worksheets.length, onDeleteWorksheet]
   )
 
+  const MENU_WIDTH = 160
+  const MENU_HEIGHT = 88
+  const VIEWPORT_PADDING = 8
+
   const handleRightClick = (e: React.MouseEvent<HTMLElement>, worksheetId: string) => {
     e.preventDefault()
     e.stopPropagation()
+    const clickX = e.clientX
+    const clickY = e.clientY
+
+    let x = clickX
+    let y = clickY
+
+    if (y + MENU_HEIGHT + VIEWPORT_PADDING > window.innerHeight) {
+      y = clickY - MENU_HEIGHT
+    }
+    if (y < VIEWPORT_PADDING) y = VIEWPORT_PADDING
+
+    if (x + MENU_WIDTH + VIEWPORT_PADDING > window.innerWidth) {
+      x = window.innerWidth - MENU_WIDTH - VIEWPORT_PADDING
+    }
+    if (x < VIEWPORT_PADDING) x = VIEWPORT_PADDING
+
     setShowContextMenu({
       worksheetId,
-      x: e.clientX,
-      y: e.clientY,
+      x,
+      y,
     })
   }
 
   return (
-    <div className="flex items-center gap-1 bg-white border-b border-gray-300 px-2 py-1 overflow-x-auto">
+    <div className="flex items-center gap-2 sm:gap-3 bg-white border-t border-slate-200 px-3 py-2 shrink-0 min-h-[40px] w-full overflow-x-auto overflow-y-hidden">
       {/* Sheet Tabs */}
-      <div className="flex items-center gap-1 flex-1">
+      <div className="flex items-center gap-1 flex-shrink-0">
         {worksheets.map((worksheet) => (
-          <div key={worksheet.id} className="flex items-center">
+          <div key={worksheet.id} className="flex items-center flex-shrink-0">
             {isRenaming === worksheet.id ? (
               <input
                 autoFocus
@@ -121,15 +166,11 @@ const SheetTabs = ({
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    handleRename(worksheet.id)
-                  } else if (e.key === 'Escape') {
-                    setIsRenaming(null)
-                    setNewName('')
-                  }
+                  if (e.key === 'Enter') handleRename(worksheet.id)
+                  else if (e.key === 'Escape') { setIsRenaming(null); setNewName('') }
                 }}
                 onBlur={() => handleRename(worksheet.id)}
-                className="px-3 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[80px]"
+                className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 min-w-[80px]"
                 placeholder="Sheet name"
               />
             ) : (
@@ -140,10 +181,10 @@ const SheetTabs = ({
                   setIsRenaming(worksheet.id)
                   setNewName(worksheet.name)
                 }}
-                className={`px-3 py-1.5 text-sm font-medium whitespace-nowrap rounded-t border-b-2 transition-colors ${
+                className={`px-4 py-2 text-sm font-medium whitespace-nowrap rounded-t-lg border transition-colors ${
                   activeWorksheet?.id === worksheet.id
-                    ? 'bg-white border-b-blue-500 text-gray-900'
-                    : 'bg-gray-50 border-b-transparent text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                    ? 'bg-slate-50 border-slate-200 border-b-white -mb-px text-slate-900 border-t-2 border-t-emerald-500'
+                    : 'bg-slate-100/80 border-transparent text-slate-600 hover:bg-slate-200 hover:text-slate-900'
                 }`}
               >
                 {worksheet.name}
@@ -156,22 +197,30 @@ const SheetTabs = ({
       {/* Add Sheet Button */}
       <button
         onClick={handleAddSheet}
-        className="px-2 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-t border-b-2 border-b-transparent text-sm font-medium ml-2"
+        className="w-8 h-8 flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-800 rounded-lg text-sm font-medium flex-shrink-0 transition-colors"
         title="Add new sheet"
       >
         +
       </button>
 
+      {/* Rows × Columns | Ready */}
+      <div className="flex items-center gap-2 sm:gap-3 text-xs text-slate-500 flex-shrink-0 whitespace-nowrap ml-auto">
+        {rowCount != null && columnCount != null && (
+          <span>{activeWorksheet?.name || '—'} | {rowCount} rows × {columnCount} columns</span>
+        )}
+        <span className="text-slate-400">Ready</span>
+      </div>
+
       {/* Context Menu */}
       {showContextMenu && (
         <>
           <div
-            className="fixed inset-0"
+            className="fixed inset-0 z-[99]"
             onClick={() => setShowContextMenu(null)}
-            style={{ zIndex: 40 }}
+            aria-hidden="true"
           />
           <div
-            className="fixed bg-white border border-gray-300 rounded shadow-lg z-50"
+            className="fixed bg-white border border-slate-200 rounded-xl shadow-lg z-[100] min-w-[140px] py-1"
             style={{
               top: `${showContextMenu.y}px`,
               left: `${showContextMenu.x}px`,
@@ -184,13 +233,13 @@ const SheetTabs = ({
                 setNewName(ws?.name || '')
                 setShowContextMenu(null)
               }}
-              className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 border-b border-gray-200"
+              className="block w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 rounded-t-xl"
             >
               Rename
             </button>
             <button
               onClick={() => handleDelete(showContextMenu.worksheetId)}
-              className="block w-full text-left px-4 py-2 text-sm text-red-700 hover:bg-red-50"
+              className="block w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 rounded-b-xl"
             >
               Delete
             </button>

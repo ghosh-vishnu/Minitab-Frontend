@@ -877,49 +877,43 @@ const MinitabLayout = () => {
   }
 
   return (
-    <div className="minitab-layout h-screen bg-white flex flex-col overflow-hidden">
-      {/* Top Header Bar */}
-      <header className="bg-white border-b border-gray-300">
-        <div className="flex items-center justify-between px-4 py-2">
+    <div className="minitab-layout h-screen w-full min-w-0 bg-white flex flex-col overflow-hidden">
+      {/* Top Header Bar - Pro design */}
+      <header className="bg-white border-b border-slate-200/80 shadow-sm">
+        <div className="flex items-center justify-between gap-4 px-5 py-3">
           {/* Left: Logo and Title */}
-          <div className="flex items-center gap-3">
-            {/* Green Minitab Logo */}
-            <div className="w-8 h-8 bg-green-600 rounded flex items-center justify-center">
+          <div className="flex items-center gap-4">
+            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-md shadow-emerald-500/20">
               <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
               </svg>
             </div>
-            <span className="font-semibold text-gray-800">Excel® Statistical Software</span>
-            
-            {/* File Name Dropdown */}
-            <div className="flex items-center gap-1 px-2 py-1 border border-gray-300 rounded text-sm">
-              <span className="text-gray-700">{spreadsheet?.name || 'Untitled'} -</span>
-              {false && (
-                <>
-                  <svg className="w-4 h-4 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                  </svg>
-                  <span className="text-gray-600 text-xs">Not currently saved</span>
-                </>
-              )}
+            <div>
+              <span className="font-semibold text-slate-900">Excel® Statistical Software</span>
+              <p className="text-xs text-slate-500 mt-0.5">Analytics</p>
             </div>
+            {spreadsheet && (
+              <div className="ml-2 pl-4 border-l border-slate-200">
+                <span className="text-sm font-medium text-slate-800">{spreadsheet.name}</span>
+              </div>
+            )}
           </div>
 
           {/* Right: Settings, User */}
-          <div className="flex items-center gap-2">
-            <button 
+          <div className="flex items-center gap-1">
+            <button
               onClick={() => setShowSettings(true)}
-              className="p-2 hover:bg-gray-100 rounded"
+              className="p-2.5 hover:bg-slate-100 rounded-lg transition-colors"
               title="Settings"
             >
-              <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
             </button>
             <Link
               to="/minitab/profile"
-              className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-medium hover:bg-blue-700 cursor-pointer"
+              className="w-9 h-9 rounded-full bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center text-white text-sm font-medium hover:from-slate-800 hover:to-slate-900 transition-all shadow-sm cursor-pointer"
             >
               {getUserInitials()}
             </Link>
@@ -927,18 +921,18 @@ const MinitabLayout = () => {
         </div>
 
         {/* Menu Bar */}
-        <div className="border-t border-gray-200 bg-white px-4 py-1 flex items-center justify-between relative">
-          <nav className="flex items-center gap-1">
+        <div className="border-t border-slate-100 bg-slate-50/50 px-5 py-1.5 flex items-center justify-between gap-2 flex-wrap relative">
+          <nav className="flex items-center gap-1 flex-wrap">
             {/* Navigator Button - Toggles Sidebar */}
             <button
               onClick={() => {
                 setShowNavigator(!showNavigator)
                 setShowNavigatorDropdown(false)
               }}
-              className={`px-3 py-1.5 text-sm rounded flex items-center gap-1 ${
+              className={`px-3 py-2 text-sm font-medium rounded-lg flex items-center gap-2 transition-colors ${
                 showNavigator
-                  ? 'bg-gray-100 text-gray-900'
-                  : 'text-gray-700 hover:bg-gray-100'
+                  ? 'bg-white text-slate-900 shadow-sm border border-slate-200'
+                  : 'text-slate-600 hover:bg-white hover:text-slate-900 hover:border-slate-200'
               }`}
             >
               Navigator
@@ -956,10 +950,10 @@ const MinitabLayout = () => {
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setShowNavigatorDropdown(!showNavigatorDropdown)}
-                className={`px-3 py-1.5 text-sm rounded flex items-center gap-1 ${
+                className={`px-3 py-2 text-sm font-medium rounded-lg flex items-center gap-2 transition-colors ${
                   showNavigatorDropdown
-                    ? 'bg-gray-100 text-gray-900'
-                    : 'text-gray-700 hover:bg-gray-100'
+                    ? 'bg-white text-slate-900 shadow-sm border border-slate-200'
+                    : 'text-slate-600 hover:bg-white hover:text-slate-900'
                 }`}
               >
                 <svg
@@ -1651,12 +1645,12 @@ const MinitabLayout = () => {
           </nav>
 
           {/* Right: Search and Layout Icons */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-shrink-0">
             <div className="relative">
               <input
                 type="text"
                 placeholder="Search"
-                className="px-3 py-1.5 text-sm border border-gray-300 rounded w-48 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="px-3 py-1.5 text-sm border border-gray-300 rounded w-24 sm:w-36 md:w-48 focus:outline-none focus:ring-1 focus:ring-blue-500 min-w-0"
               />
               <svg className="absolute right-2 top-1.5 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -1680,11 +1674,11 @@ const MinitabLayout = () => {
         </div>
       </header>
 
-      <div className="flex flex-1 overflow-hidden">
-        {/* Left Sidebar - Navigator with Slide Animation */}
+      <div className="flex flex-1 overflow-hidden min-w-0 w-full">
+        {/* Left Sidebar - Navigator Panel (Excel Statistical Software style) */}
         <aside
-          className={`bg-white border-r border-gray-300 flex flex-col transition-all duration-300 ease-in-out ${
-            showNavigator ? 'w-64' : 'w-0'
+          className={`bg-white border-r border-gray-200 flex flex-col transition-all duration-300 ease-in-out min-w-[240px] ${
+            showNavigator ? 'w-60' : 'w-0'
           }`}
           style={{
             transform: showNavigator ? 'translateX(0)' : 'translateX(-100%)',
@@ -1692,69 +1686,66 @@ const MinitabLayout = () => {
             overflow: showNavigator ? 'visible' : 'hidden',
           }}
         >
-          <div className="p-3 border-b border-gray-200 min-w-[256px] bg-white">
-            <div className="flex items-center justify-between w-full">
-              <span className="text-sm font-semibold text-gray-800">Navigator</span>
-              <button
-                onClick={() => setShowNavigator(!showNavigator)}
-                className="p-1 hover:bg-gray-100 rounded transition-colors"
-                title="Toggle Navigator"
-              >
-                <svg 
-                  className="w-4 h-4 text-gray-600" 
-                  fill="none" 
-                  stroke="currentColor" 
-                  viewBox="0 0 24 24"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-            </div>
+          {/* NAVIGATOR Header */}
+          <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+            <span className="text-xs font-medium text-gray-400 uppercase tracking-widest">Navigator</span>
+            <button
+              onClick={() => setShowNavigator(false)}
+              className="p-1.5 hover:bg-gray-100 rounded transition-colors"
+              title="Collapse"
+            >
+              <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
           </div>
 
-          <nav className="flex-1 overflow-y-auto p-2 min-w-[256px]">
+          <nav className="flex-1 overflow-y-auto py-2 px-2">
               <Link
                 to="/dashboard"
-                className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded mb-1"
+                className="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-lg mb-0.5 transition-colors"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                <svg className="w-5 h-5 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
                 </svg>
                 <span>Home</span>
               </Link>
 
-              <div className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded mb-1 cursor-pointer">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              <div className="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-lg mb-0.5 cursor-pointer">
+                <svg className="w-5 h-5 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
                 </svg>
                 <span>Navigator</span>
               </div>
 
-              <div className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded mb-1 cursor-pointer">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+              <div className="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-lg mb-0.5 cursor-pointer">
+                <svg className="w-5 h-5 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
                 </svg>
                 <span>Open from Excel Connect®</span>
               </div>
 
-              <div className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded mb-1 cursor-pointer">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+              <div className="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-lg mb-0.5 cursor-pointer">
+                <svg className="w-5 h-5 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
                 </svg>
                 <span>Open</span>
               </div>
 
-              <div className="flex items-center gap-2 px-3 py-2 text-sm text-green-600 hover:bg-gray-100 rounded mb-1 cursor-pointer">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-                <span>{spreadsheet?.name || 'Untitled'}</span>
-              </div>
+              {/* Current spreadsheet - Active state (forest green) */}
+              {spreadsheet && (
+                <div className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-green-800 bg-green-50 rounded-lg mt-1 cursor-default">
+                  <svg className="w-5 h-5 text-green-700 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+                  </svg>
+                  <span className="truncate">{spreadsheet.name}</span>
+                </div>
+              )}
 
               {/* Capability Reports Section */}
               {capabilityReports.length > 0 && (
                 <div className="mt-2 mb-2">
-                  <div className="px-3 py-2 text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                  <div className="px-3 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
                     Capability Reports
                   </div>
                   {capabilityReports.map((report, idx) => (
@@ -1765,10 +1756,10 @@ const MinitabLayout = () => {
                         setDisplayedCharts([])
                         setSelectedChartId(null)
                       }}
-                      className={`w-full text-left px-3 py-2 text-sm transition-colors ${
+                      className={`w-full text-left px-3 py-2.5 text-sm rounded-lg transition-colors ${
                         selectedCapabilityReportIndex === idx
-                          ? 'bg-blue-50 text-blue-900 font-medium'
-                          : 'text-gray-700 hover:bg-gray-50'
+                          ? 'bg-emerald-50 text-emerald-800 font-medium'
+                          : 'text-slate-600 hover:bg-slate-100'
                       }`}
                     >
                       Process Capability Report for {report.input.columnId}
@@ -1849,27 +1840,14 @@ const MinitabLayout = () => {
                 </div>
               )}
 
-              <div className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded mb-1 cursor-pointer">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                </svg>
-                <span>Learn</span>
-              </div>
-
-              <div className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded mb-1 cursor-pointer">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-                <span>Discover</span>
-              </div>
             </nav>
           </aside>
 
         {/* Main Content Area */}
         <main
-          className="flex-1 flex flex-col overflow-auto bg-gray-50 transition-all duration-300"
+          className="flex-1 flex flex-col overflow-auto bg-slate-50/50 transition-all duration-300 min-w-0 w-full"
           style={{
-            marginLeft: showNavigator ? '256px' : '0',
+            marginLeft: showNavigator ? '240px' : '0',
           }}
         >
           {selectedCapabilityReportIndex !== null && capabilityReports[selectedCapabilityReportIndex] ? (
@@ -1992,9 +1970,9 @@ const MinitabLayout = () => {
       </div>
 
       {/* Status Bar */}
-      <footer className="bg-gray-100 border-t border-gray-300 px-4 py-1 text-xs text-gray-600 flex items-center justify-between">
+      <footer className="bg-gray-100 border-t border-gray-300 px-4 py-1 text-xs text-gray-600 flex items-center justify-between shrink-0">
         <span>Ready</span>
-        <span>NaN Days Remaining</span>
+        <span>—</span>
       </footer>
 
       {/* Graph Builder Modal */}

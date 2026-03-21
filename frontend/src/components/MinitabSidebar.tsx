@@ -3,7 +3,7 @@
  * Left navigation sidebar matching Minitab Web design
  */
 
-import { Home, Compass, FolderOpen, FileText } from 'lucide-react'
+import { Home, Compass, FolderOpen } from 'lucide-react'
 
 interface NavigationItem {
   id: string
@@ -20,7 +20,7 @@ interface MinitabSidebarProps {
 }
 
 const MinitabSidebar = ({
-  activeItem = 'untitled',
+  activeItem = 'home',
   onNavigate,
   collapsed = false,
 }: MinitabSidebarProps) => {
@@ -39,11 +39,6 @@ const MinitabSidebar = ({
       id: 'open',
       label: 'Open',
       icon: <FolderOpen className="w-4 h-4" />,
-    },
-    {
-      id: 'untitled',
-      label: 'Untitled',
-      icon: <FileText className="w-4 h-4" />,
     },
   ]
 

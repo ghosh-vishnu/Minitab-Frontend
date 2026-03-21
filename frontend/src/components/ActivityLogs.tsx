@@ -113,42 +113,35 @@ const ActivityLogs = () => {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow">
-      <div className="p-6 border-b border-gray-200">
-        <h2 className="text-xl font-semibold mb-4">Activity Logs</h2>
-
-        {/* Filters */}
+    <div className="bg-white">
+      <div className="p-6 border-b border-slate-100">
+        <h2 className="text-lg font-semibold text-slate-900 mb-4">Activity Logs</h2>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {isSuperAdmin && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">User</label>
+              <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">User</label>
               <select
                 value={selectedUserId}
                 onChange={(e) => {
                   setSelectedUserId(e.target.value)
-                  if (e.target.value) {
-                    setFilters({ ...filters, user: e.target.value, days: 0 })
-                  } else {
-                    setFilters({ ...filters, user: '', days: 7 })
-                  }
+                  if (e.target.value) setFilters({ ...filters, user: e.target.value, days: 0 })
+                  else setFilters({ ...filters, user: '', days: 7 })
                 }}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
               >
                 <option value="">All Users</option>
-                {users.map((user) => (
-                  <option key={user.id} value={user.id}>
-                    {user.username} ({user.email})
-                  </option>
+                {users.map((u) => (
+                  <option key={u.id} value={u.id}>{u.username} ({u.email})</option>
                 ))}
               </select>
             </div>
           )}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Action Type</label>
+            <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Action Type</label>
             <select
               value={filters.action_type}
               onChange={(e) => setFilters({ ...filters, action_type: e.target.value })}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+              className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
             >
               <option value="">All Actions</option>
               <option value="create">Create</option>
@@ -161,11 +154,11 @@ const ActivityLogs = () => {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Model</label>
+            <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Model</label>
             <select
               value={filters.model_name}
               onChange={(e) => setFilters({ ...filters, model_name: e.target.value })}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+              className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
             >
               <option value="">All Models</option>
               <option value="Spreadsheet">Spreadsheet</option>
@@ -175,15 +168,14 @@ const ActivityLogs = () => {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Last N Days</label>
+            <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Last N Days</label>
             <select
               value={filters.days}
               onChange={(e) => {
-                const days = parseInt(e.target.value)
-                setFilters({ ...filters, days })
+                setFilters({ ...filters, days: parseInt(e.target.value) })
                 setSelectedUserId('')
               }}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+              className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
             >
               <option value="1">Last 1 Day</option>
               <option value="7">Last 7 Days</option>
@@ -195,71 +187,40 @@ const ActivityLogs = () => {
         </div>
       </div>
 
-      {/* Logs Table */}
       {loading ? (
-        <div className="p-6 text-center">Loading...</div>
+        <div className="p-12 flex justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-2 border-slate-200 border-t-slate-600" />
+        </div>
       ) : safeLogs.length === 0 ? (
-        <div className="p-6 text-center text-gray-500">No activity logs found</div>
+        <div className="p-12 text-center text-slate-500">No activity logs found</div>
       ) : (
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Timestamp
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  User
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Action
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Model
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Description
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  IP Address
-                </th>
+          <table className="min-w-full">
+            <thead>
+              <tr className="border-b border-slate-100 bg-slate-50/50">
+                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Timestamp</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">User</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Action</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Model</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Description</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">IP Address</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {safeLogs.length > 0 ? (
-                safeLogs.map((log) => (
-                  <tr key={log.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {formatDate(log.created_at)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {log.user_username || log.user_email || 'System'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getActionColor(
-                          log.action_type
-                        )}`}
-                      >
-                        {log.action_type_display || log.action_type}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {log.model_name}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">{log.description}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {log.ip_address || '-'}
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-sm text-gray-500">
-                    No activity logs found
+            <tbody className="divide-y divide-slate-100">
+              {safeLogs.map((log) => (
+                <tr key={log.id} className="hover:bg-slate-50/50">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{formatDate(log.created_at)}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">{log.user_username || log.user_email || 'System'}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`inline-flex px-2.5 py-1 rounded-lg text-xs font-medium ${getActionColor(log.action_type)}`}>
+                      {log.action_type_display || log.action_type}
+                    </span>
                   </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{log.model_name}</td>
+                  <td className="px-6 py-4 text-sm text-slate-900">{log.description}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{log.ip_address || '-'}</td>
                 </tr>
-              )}
+              ))}
             </tbody>
           </table>
         </div>

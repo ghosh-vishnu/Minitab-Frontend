@@ -199,8 +199,8 @@ export const spreadsheetsAPI = {
     })
   },
 
-  bulkUpdateCells: async (id: string, cells: Cell[]): Promise<void> => {
-    await api.post(`/spreadsheets/${id}/update_cells/`, { cells })
+  bulkUpdateCells: async (id: string, cells: Cell[], worksheetId?: string): Promise<void> => {
+    await api.post(`/spreadsheets/${id}/update_cells/`, { cells, worksheet_id: worksheetId })
   },
 
   saveWorksheetNames: async (id: string, worksheetNames: Record<string, string>): Promise<Spreadsheet> => {

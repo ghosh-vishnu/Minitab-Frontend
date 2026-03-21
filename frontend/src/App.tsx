@@ -12,7 +12,6 @@ import SpreadsheetsList from './pages/SpreadsheetsList'
 import SpreadsheetView from './pages/SpreadsheetView'
 import MinitabView from './pages/MinitabView'
 import Profile from './pages/Profile'
-import Subscriptions from './pages/Subscriptions'
 import ProtectedRoute from './components/ProtectedRoute'
 import { CompanyAdminRoute, CompanyRoute } from './components/RoleProtectedRoute'
 import Layout from './components/Layout'
@@ -130,16 +129,6 @@ function App() {
               element={
                 <CompanyRoute>
                   <SpreadsheetView />
-                </CompanyRoute>
-              } 
-            />
-            
-            {/* Subscriptions - Company members only */}
-            <Route 
-              path="subscriptions" 
-              element={
-                <CompanyRoute>
-                  <Subscriptions />
                 </CompanyRoute>
               } 
             />

@@ -185,5 +185,13 @@ export const authAPI = {
     const response = await api.get('/auth/profile/')
     return response.data
   },
+
+  /**
+   * Update current user profile (first_name, last_name).
+   */
+  updateProfile: async (data: { first_name?: string; last_name?: string }) => {
+    const response = await api.patch('/auth/profile/', data)
+    return response.data
+  },
 }
 

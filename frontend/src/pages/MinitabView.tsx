@@ -267,45 +267,50 @@ const MinitabView = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-gray-500">Loading spreadsheet...</div>
+      <div className="flex flex-col items-center justify-center h-full bg-slate-50/50">
+        <div className="animate-spin rounded-full h-10 w-10 border-2 border-slate-200 border-t-slate-600 mb-4" />
+        <p className="text-slate-500 font-medium">Loading spreadsheet...</p>
       </div>
     )
   }
 
   if (!spreadsheet) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-center">
-          <p className="text-gray-500 mb-4">Spreadsheet not found</p>
-          <button
-            onClick={() => navigate('/dashboard')}
-            className="btn btn-primary"
-          >
-            Go to Dashboard
-          </button>
-        </div>
+      <div className="flex flex-col items-center justify-center h-full bg-slate-50/50">
+        <p className="text-slate-500 mb-6">Spreadsheet not found</p>
+        <button
+          onClick={() => navigate('/dashboard')}
+          className="px-5 py-2.5 bg-slate-900 text-white rounded-xl font-medium hover:bg-slate-800 transition-colors"
+        >
+          Go to Dashboard
+        </button>
       </div>
     )
   }
 
   return (
-    <div className="minitab-view h-full flex flex-col">
-      {/* Header with Save Button */}
-      <div className="border-b border-gray-300 bg-white px-4 py-3 flex items-center justify-between">
+    <div className="minitab-view h-full w-full min-w-0 flex flex-col bg-slate-50/30">
+      {/* Header with Save Button - Pro design */}
+      <div className="border-b border-slate-200/80 bg-white px-5 py-3.5 flex items-center justify-between shadow-sm">
         <div className="flex items-center gap-3">
-          <h1 className="text-lg font-semibold text-gray-900">{spreadsheet.name}</h1>
+          <h1 className="text-lg font-semibold text-slate-900">{spreadsheet.name}</h1>
           {hasUnsavedChanges && (
-            <span className="text-xs text-gray-500">- Not currently saved</span>
+            <span className="text-xs text-amber-600 font-medium flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+              Not saved
+            </span>
+          )}
+          {!hasUnsavedChanges && (
+            <span className="text-xs text-slate-400">All changes saved</span>
           )}
         </div>
         <button
           onClick={handleSaveSpreadsheet}
           disabled={isSaving || !hasUnsavedChanges}
-          className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-colors ${
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium transition-all ${
             hasUnsavedChanges
-              ? 'bg-blue-600 text-white hover:bg-blue-700'
-              : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+              ? 'bg-slate-900 text-white hover:bg-slate-800 shadow-sm'
+              : 'bg-slate-100 text-slate-400 cursor-not-allowed'
           }`}
         >
           <svg
@@ -314,27 +319,22 @@ const MinitabView = () => {
             stroke="currentColor"
             viewBox="0 0 24 24"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M5 13l4 4L19 7"
-            />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
           </svg>
           {isSaving ? 'Saving...' : 'Save'}
         </button>
       </div>
 
-      {/* View Tabs - Data (spreadsheet), Calc, Analysis, Charts - only show allowed by submodule access */}
-      <div className="border-b border-gray-300 bg-white">
-        <div className="flex items-center px-4 gap-1">
+      {/* View Tabs */}
+      <div className="border-b border-slate-200/80 bg-white">
+        <div className="flex items-center px-5 gap-1">
           {allowedTabs.data && (
             <button
               onClick={() => setActiveView('data')}
-              className={`px-4 py-2 text-sm font-medium border-b-2 ${
+              className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
                 activeView === 'data'
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-600 hover:text-gray-900'
+                  ? 'border-emerald-500 text-slate-900'
+                  : 'border-transparent text-slate-500 hover:text-slate-800'
               }`}
             >
               Data
@@ -343,10 +343,10 @@ const MinitabView = () => {
           {allowedTabs.calc && (
             <button
               onClick={() => setActiveView('calc')}
-              className={`px-4 py-2 text-sm font-medium border-b-2 ${
+              className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
                 activeView === 'calc'
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-600 hover:text-gray-900'
+                  ? 'border-emerald-500 text-slate-900'
+                  : 'border-transparent text-slate-500 hover:text-slate-800'
               }`}
             >
               Calc
@@ -355,10 +355,10 @@ const MinitabView = () => {
           {allowedTabs.analysis && (
             <button
               onClick={() => setActiveView('analysis')}
-              className={`px-4 py-2 text-sm font-medium border-b-2 ${
+              className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
                 activeView === 'analysis'
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-600 hover:text-gray-900'
+                  ? 'border-emerald-500 text-slate-900'
+                  : 'border-transparent text-slate-500 hover:text-slate-800'
               }`}
             >
               Analysis
@@ -367,10 +367,10 @@ const MinitabView = () => {
           {allowedTabs.charts && (
             <button
               onClick={() => setActiveView('charts')}
-              className={`px-4 py-2 text-sm font-medium border-b-2 ${
+              className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
                 activeView === 'charts'
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-600 hover:text-gray-900'
+                  ? 'border-emerald-500 text-slate-900'
+                  : 'border-transparent text-slate-500 hover:text-slate-800'
               }`}
             >
               Charts
@@ -380,10 +380,11 @@ const MinitabView = () => {
       </div>
 
       {/* Content Area */}
-      <div className="flex-1 overflow-hidden flex flex-col">
-        <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-hidden flex flex-col min-w-0 w-full">
+        <div className="flex-1 overflow-hidden min-w-0 w-full">
           {activeView === 'data' && (
             <MinitabGrid
+              key={activeWorksheet?.id ?? 'no-worksheet'}
               spreadsheetId={spreadsheet.id}
               activeWorksheetId={activeWorksheet?.id}
               rowCount={spreadsheet.row_count}
@@ -395,30 +396,25 @@ const MinitabView = () => {
               onWorksheetNamesUpdate={async (names) => {
                 await spreadsheetsAPI.saveWorksheetNames(spreadsheet.id, names)
               }}
+              hideWorksheetTabs
             />
           )}
 
           {activeView === 'calc' && (
-            <div className="h-full overflow-auto p-4">
-              <div className="max-w-2xl">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Calc</h3>
-                <p className="text-sm text-gray-600 mb-4">Calculator, Column Statistics, Row Statistics, and other calc tools.</p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <button type="button" className="p-3 border border-gray-200 rounded-lg text-left hover:bg-gray-50 text-sm font-medium text-gray-900">
-                    Calculator...
-                  </button>
-                  <button type="button" className="p-3 border border-gray-200 rounded-lg text-left hover:bg-gray-50 text-sm font-medium text-gray-900">
-                    Column Statistics...
-                  </button>
-                  <button type="button" className="p-3 border border-gray-200 rounded-lg text-left hover:bg-gray-50 text-sm font-medium text-gray-900">
-                    Row Statistics...
-                  </button>
-                  <button type="button" className="p-3 border border-gray-200 rounded-lg text-left hover:bg-gray-50 text-sm font-medium text-gray-900">
-                    Standardize...
-                  </button>
-                  <button type="button" className="p-3 border border-gray-200 rounded-lg text-left hover:bg-gray-50 text-sm font-medium text-gray-900">
-                    Make Indicator Variables...
-                  </button>
+            <div className="h-full w-full overflow-auto p-6">
+              <div className="w-full max-w-4xl">
+                <h3 className="text-lg font-semibold text-slate-900 mb-2">Calc</h3>
+                <p className="text-sm text-slate-500 mb-6">Calculator, Column Statistics, Row Statistics, and other calc tools.</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {['Calculator...', 'Column Statistics...', 'Row Statistics...', 'Standardize...', 'Make Indicator Variables...'].map((label) => (
+                    <button
+                      key={label}
+                      type="button"
+                      className="p-4 border border-slate-200 rounded-xl text-left hover:bg-white hover:border-slate-300 hover:shadow-sm text-sm font-medium text-slate-900 transition-all"
+                    >
+                      {label}
+                    </button>
+                  ))}
                 </div>
               </div>
             </div>
@@ -443,6 +439,8 @@ const MinitabView = () => {
             spreadsheetId={spreadsheet.id}
             worksheets={worksheets}
             activeWorksheet={activeWorksheet}
+            rowCount={spreadsheet.row_count}
+            columnCount={spreadsheet.column_count}
             onSelectWorksheet={async (worksheet) => {
               try {
                 await spreadsheetsAPI.setActiveWorksheet(spreadsheet.id, worksheet.id)
@@ -496,37 +494,32 @@ const MinitabView = () => {
 
       {/* Save As Modal */}
       {showRenameModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-lg">
-            <h2 className="text-xl font-bold mb-4 text-gray-900">Save As</h2>
-            <p className="text-sm text-gray-600 mb-4">Please enter a name for your spreadsheet:</p>
+        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
+            <h2 className="text-lg font-semibold text-slate-900 mb-2">Save As</h2>
+            <p className="text-sm text-slate-500 mb-5">Enter a name for your spreadsheet:</p>
             <input
               type="text"
               value={newFileName}
               onChange={(e) => setNewFileName(e.target.value)}
               placeholder="e.g., Sales Report, Budget 2026"
-              className="w-full px-4 py-2 border border-gray-300 rounded-md mb-6 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-3 border border-slate-200 rounded-xl mb-6 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
               autoFocus
               onKeyPress={(e) => {
-                if (e.key === 'Enter') {
-                  handleSaveWithNewName()
-                }
+                if (e.key === 'Enter') handleSaveWithNewName()
               }}
             />
             <div className="flex justify-end gap-3">
               <button
-                onClick={() => {
-                  setShowRenameModal(false)
-                  setNewFileName('')
-                }}
-                className="px-4 py-2 text-gray-700 bg-gray-200 hover:bg-gray-300 rounded-md font-medium transition-colors"
+                onClick={() => { setShowRenameModal(false); setNewFileName('') }}
+                className="px-4 py-2.5 text-slate-700 border border-slate-200 rounded-xl font-medium hover:bg-slate-50 transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSaveWithNewName}
                 disabled={isSaving}
-                className="px-4 py-2 text-white bg-blue-600 hover:bg-blue-700 rounded-md font-medium transition-colors disabled:bg-gray-400"
+                className="px-5 py-2.5 bg-slate-900 text-white rounded-xl font-medium hover:bg-slate-800 transition-colors disabled:bg-slate-300 disabled:text-slate-500"
               >
                 {isSaving ? 'Saving...' : 'Save'}
               </button>

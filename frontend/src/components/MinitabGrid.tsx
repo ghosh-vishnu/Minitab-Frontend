@@ -25,6 +25,8 @@ interface MinitabGridProps {
   spreadsheetName?: string
   worksheetNames?: Record<string, string>
   onWorksheetNamesUpdate?: (names: Record<string, string>) => Promise<void>
+  /** When true, parent provides sheet tabs (e.g. SheetTabs). Hide duplicate tab bar and info row. */
+  hideWorksheetTabs?: boolean
 }
 
 interface WorksheetData {
@@ -43,6 +45,7 @@ const MinitabGrid = ({
   spreadsheetName = 'Worksheet 1',
   worksheetNames = {},
   onWorksheetNamesUpdate,
+  hideWorksheetTabs = false,
 }: MinitabGridProps) => {
   const gridRef = useRef<AgGridReact>(null)
   const updateTimeoutsRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map()) // Track timeouts per cell
@@ -85,11 +88,11 @@ const MinitabGrid = ({
     }
   }, []) // Only run once on mount
 
-  // Update worksheet when cells prop changes (from parent)
+  // Sync cells from parent when worksheet switches (parent loads worksheet-specific cells)
   const prevCellsRef = useRef<Cell[]>([])
   useEffect(() => {
     const cellsChanged = JSON.stringify(cells) !== JSON.stringify(prevCellsRef.current)
-    if (cellsChanged && cells.length > 0) {
+    if (cellsChanged) {
       prevCellsRef.current = cells
       setWorksheets((prev) =>
         prev.map((ws, idx) => {
@@ -844,8 +847,8 @@ const MinitabGrid = ({
   )
 
   return (
-    <div className="flex flex-col h-screen bg-white">
-      <div className="flex-1 relative overflow-hidden">
+    <div className="flex flex-col h-full w-full min-w-0 bg-white">
+      <div className="flex-1 relative overflow-hidden min-h-0">
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-5">
           <svg
             width="400"
@@ -903,64 +906,68 @@ const MinitabGrid = ({
         </div>
       </div>
 
-      <div className="border-t border-gray-200 bg-gray-50 flex items-center px-2 py-1 overflow-x-auto">
-        {worksheets.map((tab) => (
-          <div
-            key={tab.id}
-            className={`relative flex-shrink-0 mr-1 rounded-t ${
-              activeTab === tab.id
-                ? 'bg-white border-t-2 border-l border-r border-green-600'
-                : 'bg-gray-100 hover:bg-gray-200'
-            }`}
-          >
-            {editingTabId === tab.id ? (
-              <input
-                type="text"
-                value={editingTabName}
-                onChange={(e) => setEditingTabName(e.target.value)}
-                onBlur={() => handleInlineRenameSave(tab.id)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault()
-                    handleInlineRenameSave(tab.id)
-                  } else if (e.key === 'Escape') {
-                    e.preventDefault()
-                    handleInlineRenameCancel()
-                  }
-                }}
-                onClick={(e) => e.stopPropagation()}
-                onDoubleClick={(e) => e.stopPropagation()}
-                className="bg-transparent border-none outline-none text-xs px-3 py-1 text-gray-900 min-w-[80px] max-w-[200px]"
-                autoFocus
-              />
-            ) : (
-              <button
-                onClick={() => handleTabChange(tab.id)}
-                onDoubleClick={(e) => handleTabDoubleClick(e, tab.id)}
-                onContextMenu={(e) => handleTabRightClick(e, tab.id)}
-                className="px-3 py-1 block text-left whitespace-nowrap cursor-pointer hover:bg-gray-50 text-xs"
+      {!hideWorksheetTabs && (
+        <>
+          <div className="border-t border-gray-200 bg-gray-50 flex items-center px-2 py-1 overflow-x-auto">
+            {worksheets.map((tab) => (
+              <div
+                key={tab.id}
+                className={`relative flex-shrink-0 mr-1 rounded-t ${
+                  activeTab === tab.id
+                    ? 'bg-white border-t-2 border-l border-r border-green-600'
+                    : 'bg-gray-100 hover:bg-gray-200'
+                }`}
               >
-                {tab.name}
-              </button>
-            )}
+                {editingTabId === tab.id ? (
+                  <input
+                    type="text"
+                    value={editingTabName}
+                    onChange={(e) => setEditingTabName(e.target.value)}
+                    onBlur={() => handleInlineRenameSave(tab.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        handleInlineRenameSave(tab.id)
+                      } else if (e.key === 'Escape') {
+                        e.preventDefault()
+                        handleInlineRenameCancel()
+                      }
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                    onDoubleClick={(e) => e.stopPropagation()}
+                    className="bg-transparent border-none outline-none text-xs px-3 py-1 text-gray-900 min-w-[80px] max-w-[200px]"
+                    autoFocus
+                  />
+                ) : (
+                  <button
+                    onClick={() => handleTabChange(tab.id)}
+                    onDoubleClick={(e) => handleTabDoubleClick(e, tab.id)}
+                    onContextMenu={(e) => handleTabRightClick(e, tab.id)}
+                    className="px-3 py-1 block text-left whitespace-nowrap cursor-pointer hover:bg-gray-50 text-xs"
+                  >
+                    {tab.name}
+                  </button>
+                )}
+              </div>
+            ))}
+
+            <button
+              onClick={handleAddWorksheet}
+              className="ml-2 px-2 py-1 text-xs bg-gray-200 hover:bg-gray-300 rounded flex-shrink-0"
+            >
+              +
+            </button>
           </div>
-        ))}
 
-        <button
-          onClick={handleAddWorksheet}
-          className="ml-2 px-2 py-1 text-xs bg-gray-200 hover:bg-gray-300 rounded flex-shrink-0"
-        >
-          +
-        </button>
-      </div>
-
-      <div className="border-t border-gray-200 bg-gray-50 px-3 py-1 flex justify-between items-center text-xs text-gray-600">
-        <div>
-          {worksheets.find((w) => w.id === activeTab)?.name || 'Worksheet'} | {rowCount}{' '}
-          rows × {columnCount} columns
-        </div>
-        <div>Ready</div>
-      </div>
+          <div className="border-t border-gray-200 bg-gray-50 px-3 py-1 flex justify-between items-center text-xs text-gray-600">
+            <div>
+              {worksheets.find((w) => w.id === activeTab)?.name || 'Worksheet'} | {rowCount}{' '}
+              rows × {columnCount} columns
+            </div>
+            <div>Ready</div>
+          </div>
+        </>
+      )}
 
       {contextMenu &&
         contextMenu.visible &&
